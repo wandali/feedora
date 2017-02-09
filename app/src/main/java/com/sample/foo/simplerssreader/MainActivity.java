@@ -10,6 +10,7 @@ import android.text.TextUtils;
 import android.util.Log;
 import android.util.Xml;
 import android.view.View;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
@@ -151,9 +152,11 @@ public class MainActivity extends AppCompatActivity {
         @Override
         protected void onPreExecute() {
             mSwipeLayout.setRefreshing(true);
-            mFeedTitle = null;
-            mFeedLink = null;
-            mFeedDescription = null;
+            if (!mEditText.getText().toString().matches("")) {
+                mFeedTitle = null;
+                mFeedLink = null;
+                mFeedDescription = null;
+            }
             mFeedTitleTextView.setText("Feed Title: " + mFeedTitle);
             mFeedDescriptionTextView.setText("Feed Description: " + mFeedDescription);
             mFeedLinkTextView.setText("Feed Link: " + mFeedLink);
@@ -184,7 +187,8 @@ public class MainActivity extends AppCompatActivity {
         @Override
         protected void onPostExecute(Boolean success) {
             mSwipeLayout.setRefreshing(false);
-
+            InputMethodManager inputMethodManager = (InputMethodManager) getSystemService(INPUT_METHOD_SERVICE);
+            inputMethodManager.hideSoftInputFromWindow(getCurrentFocus().getWindowToken(), InputMethodManager.HIDE_NOT_ALWAYS);
             if (success) {
                 mFeedTitleTextView.setText("Feed Title: " + mFeedTitle);
                 mFeedDescriptionTextView.setText("Feed Description: " + mFeedDescription);
