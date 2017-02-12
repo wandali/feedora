@@ -1,17 +1,16 @@
 package com.sample.foo.simplerssreader;
 
+import android.net.Uri;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.TextView;
 
-import java.util.List;
+import com.bumptech.glide.Glide;
 
-/**
- * Created by obaro on 27/11/2016.
- */
+import java.util.List;
 
 public class RssFeedListAdapter
         extends RecyclerView.Adapter<RssFeedListAdapter.FeedModelViewHolder> {
@@ -42,9 +41,18 @@ public class RssFeedListAdapter
     @Override
     public void onBindViewHolder(FeedModelViewHolder holder, int position) {
         final RssFeedModel rssFeedModel = mRssFeedModels.get(position);
-        ((TextView)holder.rssFeedView.findViewById(R.id.titleText)).setText(rssFeedModel.title);
-        ((TextView)holder.rssFeedView.findViewById(R.id.descriptionText)).setText(rssFeedModel.description);
-        ((TextView)holder.rssFeedView.findViewById(R.id.linkText)).setText(rssFeedModel.link);
+        ((TextView) holder.rssFeedView.findViewById(R.id.titleText)).setText(rssFeedModel.title);
+        ((TextView) holder.rssFeedView.findViewById(R.id.descriptionText)).setText(rssFeedModel.description);
+        ((TextView) holder.rssFeedView.findViewById(R.id.linkText)).setText(rssFeedModel.link);
+        System.out.println(rssFeedModel.thumbnailUrl);
+        if (rssFeedModel.thumbnailUrl == null) return;
+        Uri imageUri = Uri.parse(rssFeedModel.thumbnailUrl);
+        ImageView imageView = (ImageView) holder.rssFeedView.findViewById(R.id.thumbnail);
+        Glide
+                .with(imageView.getContext())
+                .load(imageUri)
+                .centerCrop()
+                .into(imageView);
     }
 
     @Override

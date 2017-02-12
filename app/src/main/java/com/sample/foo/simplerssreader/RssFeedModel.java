@@ -10,8 +10,9 @@ public class RssFeedModel {
     public String link;
     public String description;
     public String newDescription = "";
+    public String thumbnailUrl;
 
-    public RssFeedModel(String title, String link, String description) {
+    public RssFeedModel(String title, String link, String description, String thumbnailUrl) {
         int x = 0;
         this.title = title;
         this.link = link;
@@ -42,5 +43,6 @@ public class RssFeedModel {
 
         }
         this.description = newDescription;
+        this.thumbnailUrl = thumbnailUrl;
     }
 }

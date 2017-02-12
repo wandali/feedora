@@ -22,8 +22,8 @@ import org.xmlpull.v1.XmlPullParserException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
+import java.net.URLConnection;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
@@ -76,6 +76,7 @@ public class MainActivity extends AppCompatActivity {
         String title = null;
         String link = null;
         String description = null;
+        String thumbUrl = null;
         boolean isItem = false;
         List<RssFeedModel> items = new ArrayList<>();
 
@@ -113,17 +114,25 @@ public class MainActivity extends AppCompatActivity {
                     xmlPullParser.nextTag();
                 }
 
-                if (name.equalsIgnoreCase("title")) {
-                    title = result;
-                } else if (name.equalsIgnoreCase("link")) {
-                    link = result;
-                } else if (name.equalsIgnoreCase("description")) {
-                    description = result;
+                name = name.toLowerCase();
+                switch (name) {
+                    case "title":
+                        title = result;
+                        break;
+                    case "link":
+                        link = result;
+                        break;
+                    case "description":
+                        description = result;
+                        break;
+                    case "media:thumbnail":
+                        thumbUrl = xmlPullParser.getAttributeValue(null, "url");
+                        break;
                 }
 
                 if (title != null && link != null && description != null) {
                     if(isItem) {
-                        RssFeedModel item = new RssFeedModel(title, link, description);
+                        RssFeedModel item = new RssFeedModel(title, link, description, thumbUrl);
                         items.add(item);
                     }
                     else {
@@ -135,6 +144,7 @@ public class MainActivity extends AppCompatActivity {
                     title = null;
                     link = null;
                     description = null;
+                    thumbUrl = null;
                     isItem = false;
                 }
             }
@@ -169,12 +179,25 @@ public class MainActivity extends AppCompatActivity {
                 return false;
 
             try {
-                if(!urlLink.startsWith("http://") && !urlLink.startsWith("https://"))
-                    urlLink = "http://" + urlLink;
-
-                URL url = new URL(urlLink);
-                InputStream inputStream = url.openConnection().getInputStream();
-                mFeedModelList = parseFeed(inputStream);
+                InputStream stream;
+                Boolean hasNoProtocol = !urlLink.startsWith("http://") && !urlLink.startsWith("https://");
+                if (hasNoProtocol) {
+                    URL httpUrl = new URL("http://" + urlLink);
+                    URL httpsUrl = new URL("https://" + urlLink);
+                    try {
+                        URLConnection connection = httpsUrl.openConnection();
+                        connection.setConnectTimeout(1000);
+                        stream = connection.getInputStream();
+                    } catch (Exception e) {
+                        URLConnection connection = httpUrl.openConnection();
+                        connection.setConnectTimeout(1000);
+                        stream = connection.getInputStream();
+                    }
+                } else {
+                    URL url = new URL(urlLink);
+                    stream = url.openConnection().getInputStream();
+                }
+                mFeedModelList = parseFeed(stream);
                 return true;
             } catch (IOException e) {
                 Log.e(TAG, "Error", e);
