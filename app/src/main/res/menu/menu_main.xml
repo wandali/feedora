@@ -1,0 +1,33 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+
+    tools:context="com.example.francis.testdropdown.MainActivity" >
+    <item
+        android:id="@+id/sort"
+        android:orderInCategory="100"
+        app:showAsAction="always"
+        android:icon="@android:drawable/ic_menu_sort_by_size"
+        android:title="">
+        <menu>
+            <item android:id="@+id/dateCreated"
+                android:title="Date Created"
+                android:orderInCategory="100"
+                app:showAsAction="never" />
+            <item android:id="@+id/dateModified"
+                android:title="Date Modified"
+                android:orderInCategory="101" />
+            <item android:id="@+id/articleTitle"
+                android:title="Article Title"
+                android:orderInCategory="102" />
+            <item
+                android:id="@+id/Author"
+                android:title="Author"
+                android:orderInCategory="103"/>
+            <item android:id="@+id/Random"
+                android:title="Random"
+                android:orderInCategory="104"/>
+        </menu>
+    </item>
+
+</menu>
