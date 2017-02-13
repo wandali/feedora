@@ -1,5 +1,7 @@
 package com.sample.foo.simplerssreader;
 
+import android.net.Uri;
+
 /**
  * Created by obaro on 27/11/2016.
  */
@@ -10,9 +12,9 @@ public class RssFeedModel {
     public String link;
     public String description;
     public String newDescription = "";
-    public String thumbnailUrl;
+    public Uri thumbnailUri;
 
-    public RssFeedModel(String title, String link, String description, String thumbnailUrl) {
+    public RssFeedModel(String title, String link, String description, String thumbnailUri) {
         int x = 0;
         this.title = title;
         this.link = link;
@@ -43,6 +45,6 @@ public class RssFeedModel {
 
         }
         this.description = newDescription;
-        this.thumbnailUrl = thumbnailUrl;
+        if (thumbnailUri != null) this.thumbnailUri = Uri.parse(thumbnailUri);
     }
 }

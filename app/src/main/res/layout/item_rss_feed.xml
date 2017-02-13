@@ -7,20 +7,25 @@
     android:paddingLeft="0dp"
     android:paddingRight="0dp"
     android:paddingTop="5dp"
-    android:paddingBottom="5dp">
+    android:id="@+id/editActions"
+    android:paddingBottom="5dp"
+    android:clickable="false">
 
     <ImageView
         android:id="@+id/thumbnail"
         android:layout_width="100dp"
         android:layout_height="100dp"
         android:layout_gravity="start"
-        android:background="#eeeeee" />
+        android:background="#eeeeee"
+        android:duplicateParentState="true"
+        android:clickable="false" />
 
     <LinearLayout
         android:orientation="vertical"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_marginStart="5dp">
+        android:layout_marginStart="10dp"
+        android:clickable="false">
 
         <TextView
             android:id="@+id/titleText"
@@ -31,22 +36,17 @@
             android:textSize="15sp"
             android:minHeight="0dp"
             android:maxLines="3"
-            android:ellipsize="end" />
+            android:ellipsize="end"
+            android:clickable="false" />
 
         <TextView
             android:id="@+id/descriptionText"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:maxLines="2"
-            android:ellipsize="end" />
-
-        <TextView
-            android:id="@+id/linkText"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="5dp"
             android:ellipsize="end"
-            android:maxLines="1" />
+            android:clickable="false" />
+
     </LinearLayout>
 
 
