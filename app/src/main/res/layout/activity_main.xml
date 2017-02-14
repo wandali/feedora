@@ -22,7 +22,8 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignParentEnd="true"
-        android:text="Fetch" />
+        android:text="Fetch"
+        android:textSize="12sp" />
 
     <android.support.design.widget.TextInputLayout
         android:id="@+id/textInputLayout"
