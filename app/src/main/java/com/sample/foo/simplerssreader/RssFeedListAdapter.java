@@ -1,50 +1,80 @@
 package com.sample.foo.simplerssreader;
 
+import android.content.Context;
+import android.content.Intent;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.TextView;
+
+import com.bumptech.glide.Glide;
 
 import java.util.List;
 
-/**
- * Created by obaro on 27/11/2016.
- */
-
-public class RssFeedListAdapter
+class RssFeedListAdapter
         extends RecyclerView.Adapter<RssFeedListAdapter.FeedModelViewHolder> {
 
     private List<RssFeedModel> mRssFeedModels;
 
-    public static class FeedModelViewHolder extends RecyclerView.ViewHolder {
-        private View rssFeedView;
+    static class FeedModelViewHolder
+            extends RecyclerView.ViewHolder
+            implements View.OnClickListener {
 
-        public FeedModelViewHolder(View v) {
+        private View rssFeedView;
+        private final Context context;
+        private RssFeedModel model;
+
+        FeedModelViewHolder(View v) {
             super(v);
             rssFeedView = v;
+            context = v.getContext();
+            v.setOnClickListener(this);
+        }
+
+        @Override
+        public void onClick(View view) {
+            final Intent intent = new Intent(context, ArticleViewActivity.class);
+            intent.putExtra("link", model.link);
+            context.startActivity(intent);
         }
     }
 
-    public RssFeedListAdapter(List<RssFeedModel> rssFeedModels) {
+    RssFeedListAdapter(List<RssFeedModel> rssFeedModels) {
         mRssFeedModels = rssFeedModels;
     }
 
     @Override
     public FeedModelViewHolder onCreateViewHolder(ViewGroup parent, int type) {
-        View v = LayoutInflater.from(parent.getContext())
+        View v = LayoutInflater
+                .from(parent.getContext())
                 .inflate(R.layout.item_rss_feed, parent, false);
-        FeedModelViewHolder holder = new FeedModelViewHolder(v);
-        return holder;
+        return new FeedModelViewHolder(v);
     }
 
     @Override
     public void onBindViewHolder(FeedModelViewHolder holder, int position) {
         final RssFeedModel rssFeedModel = mRssFeedModels.get(position);
-        ((TextView)holder.rssFeedView.findViewById(R.id.titleText)).setText(rssFeedModel.title);
-        ((TextView)holder.rssFeedView.findViewById(R.id.descriptionText)).setText(rssFeedModel.description);
-        ((TextView)holder.rssFeedView.findViewById(R.id.linkText)).setText(rssFeedModel.link);
+        holder.model = rssFeedModel;
+
+        ((TextView) holder.rssFeedView.findViewById(R.id.titleText)).setText(rssFeedModel.title);
+        ((TextView) holder.rssFeedView.findViewById(R.id.descriptionText)).setText(rssFeedModel.description);
+
+        ImageView imageView = (ImageView) holder.rssFeedView.findViewById(R.id.thumbnail);
+        if (rssFeedModel.thumbnailUri != null) {
+            // If we have a thumbnail for this item load it in.
+            Glide
+                    .with(imageView.getContext())
+                    .load(rssFeedModel.thumbnailUri)
+                    .centerCrop()
+                    .into(imageView);
+        } else {
+            // If we don't have a thumbnail clear the imageView.
+            Glide
+                    .clear(imageView);
+            imageView.setImageDrawable(null);
+        }
     }
 
     @Override

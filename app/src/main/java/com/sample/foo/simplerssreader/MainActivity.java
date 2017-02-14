@@ -113,30 +113,11 @@ public class MainActivity extends AppCompatActivity {
                 }
 
                 if (name.equalsIgnoreCase("title")) {
-                    Log.d("MainActivity", name + " text: " +result);
-                    if(result != null){
-                        title = result;
-                    }
-                    else{
-                        title = "No Title Found";
-                    }
-
+                    title = result;
                 } else if (name.equalsIgnoreCase("link")) {
-                    Log.d("MainActivity", name + " text: " +result);
-                    if(result != null){
-                        link = result;
-                    }
-                    else{
-                        link = "No Link Found";
-                    }
+                    link = result;
                 } else if (name.equalsIgnoreCase("description")) {
-                    Log.d("MainActivity", name + " text: " +result);
-                    if(result != null){
-                        description = result;
-                    }
-                    else{
-                        description = "No Description Found";
-                    }
+                    description = result;
                 }
 
                 if (title != null && link != null && description != null) {
