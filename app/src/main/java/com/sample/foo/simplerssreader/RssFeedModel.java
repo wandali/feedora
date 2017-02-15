@@ -26,7 +26,7 @@ public class RssFeedModel {
                 x = 1;
             } else if (c == '>') {
                 x = 0;
-            } else if (c == '&') {
+            } else if (c == '&' && x == 0) {
                 x = 2;
                 xmlChange = xmlChange + c;
             } else if (x == 0) {
