@@ -50,12 +50,12 @@ public class MainActivity extends AppCompatActivity {
     private Button subFeedButton;
     private SwipeRefreshLayout mSwipeLayout;
     private TextView mFeedTitleTextView;
-    private TextView mFeedLinkTextView;
+    //private TextView mFeedLinkTextView;
     private TextView mFeedDescriptionTextView;
 
     private List<RssFeedModel> mFeedModelList;
     private String mFeedTitle;
-    private String mFeedLink;
+    //private String mFeedLink;
     private String mFeedDescription;
     /**
      * ATTENTION: This was auto-generated to implement the App Indexing API.
@@ -81,7 +81,7 @@ public class MainActivity extends AppCompatActivity {
         mSwipeLayout = (SwipeRefreshLayout) findViewById(R.id.swipeRefreshLayout);
         mFeedTitleTextView = (TextView) findViewById(R.id.feedTitle);
         mFeedDescriptionTextView = (TextView) findViewById(R.id.feedDescription);
-        mFeedLinkTextView = (TextView) findViewById(R.id.feedLink);
+        //mFeedLinkTextView = (TextView) findViewById(R.id.feedLink);
 
         mRecyclerView.setLayoutManager(new LinearLayoutManager(this));
 
@@ -233,7 +233,7 @@ public class MainActivity extends AppCompatActivity {
                         items.add(item);
                     } else {
                         mFeedTitle = title;
-                        mFeedLink = link;
+                        //mFeedLink = link;
                         mFeedDescription = description;
                     }
 
@@ -296,12 +296,12 @@ public class MainActivity extends AppCompatActivity {
             mSwipeLayout.setRefreshing(true);
             if (!mEditText.getText().toString().matches("")) {
                 mFeedTitle = null;
-                mFeedLink = null;
+                //mFeedLink = null;
                 mFeedDescription = null;
             }
             mFeedTitleTextView.setText("Feed Title: " + mFeedTitle);
             mFeedDescriptionTextView.setText("Feed Description: " + mFeedDescription);
-            mFeedLinkTextView.setText("Feed Link: " + mFeedLink);
+            //mFeedLinkTextView.setText("Feed Link: " + mFeedLink);
             urlLink = mEditText.getText().toString();
         }
 
@@ -347,7 +347,7 @@ public class MainActivity extends AppCompatActivity {
             if (success) {
                 mFeedTitleTextView.setText("Feed Title: " + mFeedTitle);
                 mFeedDescriptionTextView.setText("Feed Description: " + mFeedDescription);
-                mFeedLinkTextView.setText("Feed Link: " + mFeedLink);
+                //mFeedLinkTextView.setText("Feed Link: " + mFeedLink);
                 // Fill RecyclerView
                 mRecyclerView.setAdapter(new RssFeedListAdapter(mFeedModelList));
             } else {

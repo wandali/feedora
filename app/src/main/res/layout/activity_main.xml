@@ -56,19 +56,19 @@
         android:text="Feed Description: "
         android:layout_toStartOf="@+id/subFeedButton" />
 
-    <TextView
+    <!--<TextView
         android:id="@+id/feedLink"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_below="@id/feedDescription"
         android:text="Feed Link: "
-        android:layout_toStartOf="@+id/subFeedButton" />
+        android:layout_toStartOf="@+id/subFeedButton" />-->
 
     <android.support.v4.widget.SwipeRefreshLayout
         android:id="@+id/swipeRefreshLayout"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_below="@id/feedLink"
+        android:layout_below="@id/feedDescription"
         android:layout_marginTop="@dimen/activity_vertical_margin">
 
         <android.support.v7.widget.RecyclerView
