@@ -236,22 +236,6 @@ public class MainActivity extends AppCompatActivity {
                         thumbUrl = xmlPullParser.getAttributeValue(null, "url");
                         break;
                 }
-                /*if(name.equals("title") && title == null){
-                    title = result;
-                }
-                else if(name.equals("link")){
-                    link = result;
-                }
-                else if(name.equals("description")){
-                    description = result;
-                }
-                else if(name.equals("media:thumbnail")){
-                    thumbUrl = xmlPullParser.getAttributeValue(null, "url");
-                }
-                else{
-                    continue;
-                }*/
-
 
                 if(isStart && isItem){
                     if(numTitle > 1){
