@@ -266,7 +266,7 @@ public class MainActivity extends AppCompatActivity {
                     }
                     Log.d("MainActivity", title + " "+ link+ " " + description);
                     mFeedTitle = title;
-                    mFeedLink = link;
+                    //mFeedLink = link;
                     mFeedDescription = description;
                     isStart = false;
                     title = null;
