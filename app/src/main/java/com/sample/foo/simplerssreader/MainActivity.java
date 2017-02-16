@@ -171,12 +171,16 @@ public class MainActivity extends AppCompatActivity {
     }
     public List<RssFeedModel> parseFeed(InputStream inputStream) throws XmlPullParserException, IOException {
         String title = null;
+        String saveTitle = null;
         String link = null;
         String description = null;
         String thumbUrl = null;
         boolean isItem = false;
         boolean endItem = false;
+        boolean isStart = true;
+        int numTitle = 0;
         List<RssFeedModel> items = new ArrayList<>();
+        List <String> artTitles = new ArrayList<String>();
 
         try {
             XmlPullParser xmlPullParser = Xml.newPullParser();
@@ -199,7 +203,6 @@ public class MainActivity extends AppCompatActivity {
                     }
                     continue;
                 }
-
                 if (eventType == XmlPullParser.START_TAG) {
                     if (name.equalsIgnoreCase("item")) {
                         Log.d("MainActivity", "start article");
@@ -217,9 +220,11 @@ public class MainActivity extends AppCompatActivity {
                 }
 
                 name = name.toLowerCase();
-                /*switch (name) {
+                switch (name) {
                     case "title":
                         title = result;
+                        artTitles.add(title);
+                        numTitle ++;
                         break;
                     case "link":
                         link = result;
@@ -230,8 +235,8 @@ public class MainActivity extends AppCompatActivity {
                     case "media:thumbnail":
                         thumbUrl = xmlPullParser.getAttributeValue(null, "url");
                         break;
-                }*/
-                if(name.equals("title") && title == null){
+                }
+                /*if(name.equals("title") && title == null){
                     title = result;
                 }
                 else if(name.equals("link")){
@@ -245,11 +250,39 @@ public class MainActivity extends AppCompatActivity {
                 }
                 else{
                     continue;
-                }
+                }*/
 
-                if (title != null && link != null && description != null && endItem == true) {
+
+                if(isStart && isItem){
+                    if(numTitle > 1){
+                            title = artTitles.get(0);
+                            numTitle = 0;
+                    }
+                    else if(numTitle == artTitles.size()){
+                        title = "";
+                    }
+                    else{
+                        Log.d("MainActivity", "ERROR: PARSING FEED TITLE");
+                    }
+                    Log.d("MainActivity", title + " "+ link+ " " + description);
+                    mFeedTitle = title;
+                    mFeedLink = link;
+                    mFeedDescription = description;
+                    isStart = false;
+                    title = null;
+                    link = null;
+                    description = null;
+                }
+                
+                if (title != null && link != null && description != null && endItem) {
                     if (isItem) {
-                        Log.d("MainActivity",title + " " + link + " "+ description + " " + thumbUrl);
+                        if(numTitle == artTitles.size()){
+                            title = artTitles.get(numTitle - 2);
+                        }
+                        else{
+                            title = artTitles.get(numTitle);
+                        }
+                        Log.d("MainActivity",title+ " " + link + " "+ description + " " + thumbUrl);
                         RssFeedModel item = new RssFeedModel(title, link, description, thumbUrl);
                         item.printArticle();
                         items.add(item);
@@ -257,7 +290,6 @@ public class MainActivity extends AppCompatActivity {
                         mFeedTitle = title;
                         mFeedLink = link;
                         mFeedDescription = description;
-                        Log.d("MainActivity", mFeedTitle + " "+ mFeedLink+ " " + mFeedDescription);
                     }
 
                     title = null;
@@ -342,11 +374,11 @@ public class MainActivity extends AppCompatActivity {
                     URL httpsUrl = new URL("https://" + urlLink);
                     try {
                         URLConnection connection = httpsUrl.openConnection();
-                        connection.setConnectTimeout(1000);
+                        connection.setConnectTimeout(3000);
                         stream = connection.getInputStream();
                     } catch (Exception e) {
                         URLConnection connection = httpUrl.openConnection();
-                        connection.setConnectTimeout(1000);
+                        connection.setConnectTimeout(3000);
                         stream = connection.getInputStream();
                     }
                 } else {

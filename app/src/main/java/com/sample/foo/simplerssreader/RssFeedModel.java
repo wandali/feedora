@@ -1,6 +1,7 @@
 package com.sample.foo.simplerssreader;
 
 import android.net.Uri;
+import android.util.Log;
 
 /**
  * Created by obaro on 27/11/2016.
@@ -46,5 +47,8 @@ public class RssFeedModel {
         }
         this.description = newDescription;
         if (thumbnailUri != null) this.thumbnailUri = Uri.parse(thumbnailUri);
+    }
+    public void printArticle(){
+        Log.d("RSSReedModel",title + " " + link + " "+ description + " " + thumbnailUri);
     }
 }
