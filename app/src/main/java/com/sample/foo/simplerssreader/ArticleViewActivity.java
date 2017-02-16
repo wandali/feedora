@@ -1,13 +1,9 @@
 package com.sample.foo.simplerssreader;
 
-import android.annotation.SuppressLint;
-import android.app.ActionBar;
 import android.app.Activity;
 import android.os.Bundle;
-import android.os.Handler;
-import android.view.MotionEvent;
-import android.view.View;
 import android.webkit.WebView;
+import android.webkit.WebViewClient;
 
 public class ArticleViewActivity extends Activity {
     @Override
@@ -16,8 +12,19 @@ public class ArticleViewActivity extends Activity {
         setContentView(R.layout.activity_article_view);
         Bundle b = getIntent().getExtras();
         String link = b.getString("link");
-        System.out.println("got the link" + link);
-        WebView webview=(WebView)findViewById(R.id.webView);
-        webview.loadUrl(link);
+
+        WebView webView=(WebView)findViewById(R.id.webView);
+        webView.getSettings().setJavaScriptEnabled(true);
+        webView.getSettings().setLoadWithOverviewMode(true);
+        webView.getSettings().setUseWideViewPort(true);
+        webView.setWebViewClient(new WebViewClient() {
+            @Override
+            public boolean shouldOverrideUrlLoading(WebView view, String url) {
+                return false;
+            }
+        });
+
+        assert link != null;
+        webView.loadUrl(link);
     }
 }
