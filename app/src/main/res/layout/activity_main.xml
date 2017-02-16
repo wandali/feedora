@@ -56,14 +56,6 @@
         android:text="Feed Description: "
         android:layout_toStartOf="@+id/subFeedButton" />
 
-    <!--<TextView
-        android:id="@+id/feedLink"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_below="@id/feedDescription"
-        android:text="Feed Link: "
-        android:layout_toStartOf="@+id/subFeedButton" />-->
-
     <android.support.v4.widget.SwipeRefreshLayout
         android:id="@+id/swipeRefreshLayout"
         android:layout_width="match_parent"
@@ -77,6 +69,8 @@
             android:layout_height="match_parent" />
     </android.support.v4.widget.SwipeRefreshLayout>
 
+    <!-- Date: 16/02/2017
+    Francis: This is a new addition. It is the subscribe button and it links to the dropdown menu-->
     <Button
         android:text="Subscribe"
         android:layout_width="wrap_content"

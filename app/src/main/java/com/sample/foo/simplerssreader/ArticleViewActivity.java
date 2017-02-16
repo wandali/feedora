@@ -5,6 +5,7 @@ import android.os.Bundle;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 
+
 public class ArticleViewActivity extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -13,6 +14,9 @@ public class ArticleViewActivity extends Activity {
         Bundle b = getIntent().getExtras();
         String link = b.getString("link");
 
+        /* Date: 0
+
+         */
         WebView webView=(WebView)findViewById(R.id.webView);
         webView.getSettings().setJavaScriptEnabled(true);
         webView.getSettings().setLoadWithOverviewMode(true);

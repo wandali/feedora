@@ -33,6 +33,8 @@ class RssFeedListAdapter
             v.setOnClickListener(this);
         }
 
+        /* Date: 16/02/2017
+         Wanda: Load the article when clicked */
         @Override
         public void onClick(View view) {
             final Intent intent = new Intent(context, ArticleViewActivity.class);
@@ -63,14 +65,16 @@ class RssFeedListAdapter
 
         ImageView imageView = (ImageView) holder.rssFeedView.findViewById(R.id.thumbnail);
         if (rssFeedModel.thumbnailUri != null) {
-            // If we have a thumbnail for this item load it in.
+            /* Date: 16/02/2017
+            Wanda: If we have a thumbnail for this item load it in. */
             Glide
                     .with(imageView.getContext())
                     .load(rssFeedModel.thumbnailUri)
                     .centerCrop()
                     .into(imageView);
         } else {
-            // If we don't have a thumbnail clear the imageView.
+            /* Date: 16/02/2017
+               Wanda: If we don't have a thumbnail clear the imageView. */
             Glide
                     .clear(imageView);
             imageView.setImageDrawable(null);

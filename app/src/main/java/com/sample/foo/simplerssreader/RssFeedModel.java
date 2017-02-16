@@ -5,9 +5,6 @@ import android.util.Log;
 
 import org.apache.commons.lang.StringEscapeUtils;
 
-/**
- * Created by obaro on 27/11/2016.
- */
 
 public class RssFeedModel {
 
@@ -16,12 +13,18 @@ public class RssFeedModel {
     public String description;
     public Uri thumbnailUri;
 
+    /* Date: 16/02/2017
+    Wanda: Trims the tab spaces and parses out the image within the description
+    so only the proper description is shown in the UI */
     String parseDescription(String description) {
         String parsed = description;
         parsed = parsed.replaceAll("<img.*\\/>", "");
         parsed = parsed.replaceAll("<p>", "");
         parsed = parsed.replaceAll("<\\/p>", "");
         parsed = parsed.trim();
+
+        /* Date: 16/02/2017
+        Wanda: Changes unicode to their respective escape character */
         parsed = StringEscapeUtils.unescapeXml(parsed);
         parsed = StringEscapeUtils.unescapeHtml(parsed);
         return parsed;

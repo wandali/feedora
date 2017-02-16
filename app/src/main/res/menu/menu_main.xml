@@ -1,3 +1,5 @@
+<!-- Date: 16/02/2017
+Francis: This xml implements the top right menu. It was never there before -->
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"

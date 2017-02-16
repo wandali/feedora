@@ -50,12 +50,10 @@ public class MainActivity extends AppCompatActivity {
     private Button subFeedButton;
     private SwipeRefreshLayout mSwipeLayout;
     private TextView mFeedTitleTextView;
-    //private TextView mFeedLinkTextView;
     private TextView mFeedDescriptionTextView;
 
     private List<RssFeedModel> mFeedModelList;
     private String mFeedTitle;
-    //private String mFeedLink;
     private String mFeedDescription;
     /**
      * ATTENTION: This was auto-generated to implement the App Indexing API.
@@ -81,7 +79,6 @@ public class MainActivity extends AppCompatActivity {
         mSwipeLayout = (SwipeRefreshLayout) findViewById(R.id.swipeRefreshLayout);
         mFeedTitleTextView = (TextView) findViewById(R.id.feedTitle);
         mFeedDescriptionTextView = (TextView) findViewById(R.id.feedDescription);
-        //mFeedLinkTextView = (TextView) findViewById(R.id.feedLink);
 
         mRecyclerView.setLayoutManager(new LinearLayoutManager(this));
 
@@ -98,56 +95,62 @@ public class MainActivity extends AppCompatActivity {
             }
         });
         subFeedButton.setOnClickListener(new View.OnClickListener()
-        {//IMPORTANT NOTE: READ THIS FOR ADDING NEW MENU ITEMS PROGRAMATICALLY
-            //popup.getMenu().add(groupId, itemId, order, title); for each menuItem you want to add.
+        {
+            /* Date: 16/02/2017
+            Francis: IMPORTANT NOTE: READ THIS FOR ADDING NEW MENU ITEMS PROGRAMATICALLY
+            popup.getMenu().add(groupId, itemId, order, title); for each menuItem you want to add.
+            This comment is left in for the other group members. Depending on if I wind up
+            not working on adding new items to the drop down menu. */
             @Override
             public void onClick(View view)
             {
                 PopupMenu popup = new PopupMenu(MainActivity.this,subFeedButton);
-                //Inflating the Popup through the xml file
+                /* Date: 16/02/2017
+                Francis: Inflating the Popup through the xml file */
                 popup.getMenuInflater().inflate(R.menu.subscribe_menu, popup.getMenu());
-                //registering popup with OnMenuItemClickListener. So you can click on the options
+                /* Date: 16/02/2017
+                Francis: Registering popup with OnMenuItemClickListener. So you can click on the
+                options */
                 popup.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener()
                 {
                     public boolean onMenuItemClick(MenuItem item)
                     {
-                        /*
-                        Toast.makeText(
-                                MainActivity.this,
-                                "You Clicked : " + item.getTitle(),
-                                Toast.LENGTH_SHORT
-                        ).show();
-                        */
                         return true;
                     }
                 });
                 popup.show();
             }
         });
-        // ATTENTION: This was auto-generated to implement the App Indexing API.
-        // See https://g.co/AppIndexing/AndroidStudio for more information.
+        /* Date: 16/02/2017
+        Francis: ATTENTION: This was auto-generated to implement the App Indexing API.
+        See https://g.co/AppIndexing/AndroidStudio for more information. */
+
         client = new GoogleApiClient.Builder(this).addApi(AppIndex.API).build();
     }
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu; this adds items to the action bar if it is present.
-        // menu_main shares the name of menu_main.xml Inflating the menus inside it.
+        /* Date: 16/02/2017
+        Francis: Inflate the menu; this adds items to the action bar if it is present.
+        menu_main shares the name of menu_main.xml Inflating the menus inside it. */
         getMenuInflater().inflate(R.menu.menu_main, menu);
         return true;
     }
     @Override
     public boolean onOptionsItemSelected(MenuItem item){
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
+        /* Date: 16/02/2017
+        Francis: Handle action bar item clicks here. (The top right menu) */
         int id = item.getItemId();
 
 
-        if (mToggle.onOptionsItemSelected(item)){
-            return true;
+        /* Date: 16/02/2017
+        For no functionality, the below if statement is sufficient. */
+        if(mToggle.onOptionsItemSelected(item)){
+            return(true);
         }
 
-        //noinspection SimplifiableIfStatement
+        /* Date: 16/02/2017
+        Francis: A row of if statements to give each button their own functionality later.
+        May as well do it now. */
         if (id == R.id.dateCreated) {
             return true;
         }
@@ -164,14 +167,10 @@ public class MainActivity extends AppCompatActivity {
             return true;
         }
 
-        if(mToggle.onOptionsItemSelected(item)){
-            return(true);
-        }
         return super.onOptionsItemSelected(item);
     }
     public List<RssFeedModel> parseFeed(InputStream inputStream) throws XmlPullParserException, IOException {
         String title = null;
-        String saveTitle = null;
         String link = null;
         String description = null;
         String thumbUrl = null;
@@ -180,7 +179,7 @@ public class MainActivity extends AppCompatActivity {
         boolean isStart = true;
         int numTitle = 0;
         List<RssFeedModel> items = new ArrayList<>();
-        List <String> artTitles = new ArrayList<String>();
+        List <String> artTitles = new ArrayList<>();
 
         try {
             XmlPullParser xmlPullParser = Xml.newPullParser();
@@ -197,7 +196,6 @@ public class MainActivity extends AppCompatActivity {
 
                 if (eventType == XmlPullParser.END_TAG) {
                     if (name.equalsIgnoreCase("item")) {
-                        Log.d("Main Activity", "end article");
                         isItem = false;
                         endItem = true;
                     }
@@ -205,14 +203,11 @@ public class MainActivity extends AppCompatActivity {
                 }
                 if (eventType == XmlPullParser.START_TAG) {
                     if (name.equalsIgnoreCase("item")) {
-                        Log.d("MainActivity", "start article");
                         isItem = true;
-                        //endItem = false;
                         continue;
                     }
                 }
 
-                Log.d("MainActivity", "Parsing name ==> " + name);
                 String result = "";
                 if (xmlPullParser.next() == XmlPullParser.TEXT) {
                     result = xmlPullParser.getText();
@@ -232,6 +227,8 @@ public class MainActivity extends AppCompatActivity {
                     case "description":
                         description = result;
                         break;
+                    /* Date: 16/02/2017
+                    Wanda: grabs the attribute of the url*/
                     case "media:thumbnail":
                         thumbUrl = xmlPullParser.getAttributeValue(null, "url");
                         break;
@@ -248,9 +245,7 @@ public class MainActivity extends AppCompatActivity {
                     else{
                         Log.d("MainActivity", "ERROR: PARSING FEED TITLE");
                     }
-                    Log.d("MainActivity", title + " "+ link+ " " + description);
                     mFeedTitle = title;
-                    //mFeedLink = link;
                     mFeedDescription = description;
                     isStart = false;
                     title = null;
@@ -272,7 +267,6 @@ public class MainActivity extends AppCompatActivity {
                         items.add(item);
                     } else {
                         mFeedTitle = title;
-                        //mFeedLink = link;
                         mFeedDescription = description;
                     }
 
@@ -336,12 +330,10 @@ public class MainActivity extends AppCompatActivity {
             mSwipeLayout.setRefreshing(true);
             if (!mEditText.getText().toString().matches("")) {
                 mFeedTitle = null;
-                //mFeedLink = null;
                 mFeedDescription = null;
             }
             mFeedTitleTextView.setText("Feed Title: " + mFeedTitle);
             mFeedDescriptionTextView.setText("Feed Description: " + mFeedDescription);
-            //mFeedLinkTextView.setText("Feed Link: " + mFeedLink);
             urlLink = mEditText.getText().toString();
         }
 
@@ -350,6 +342,10 @@ public class MainActivity extends AppCompatActivity {
             if (TextUtils.isEmpty(urlLink))
                 return false;
 
+            /* Date: 16/02/2017
+            Wanda: If the URL entered does not have an http or https associated with it, it will
+            load the proper one for the website so the articles can be pulled and it does not get
+            displayed as invalid RSS feed url */
             try {
                 InputStream stream;
                 Boolean hasNoProtocol = !urlLink.startsWith("http://") && !urlLink.startsWith("https://");
@@ -379,6 +375,7 @@ public class MainActivity extends AppCompatActivity {
             return false;
         }
 
+
         @Override
         protected void onPostExecute(Boolean success) {
             mSwipeLayout.setRefreshing(false);
@@ -387,12 +384,10 @@ public class MainActivity extends AppCompatActivity {
             if (success) {
                 mFeedTitleTextView.setText("Feed Title: " + mFeedTitle);
                 mFeedDescriptionTextView.setText("Feed Description: " + mFeedDescription);
-                //mFeedLinkTextView.setText("Feed Link: " + mFeedLink);
-                // Fill RecyclerView
                 mRecyclerView.setAdapter(new RssFeedListAdapter(mFeedModelList));
             } else {
                 Toast.makeText(MainActivity.this,
-                        "Enter a valid Rss feed url",
+                        "Enter a Valid RSS Feed URL",
                         Toast.LENGTH_LONG).show();
             }
         }

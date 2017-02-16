@@ -5,11 +5,13 @@
     android:background="#0099cc"
     tools:context="com.sample.foo.simplerssreader.ArticleViewActivity">
 
-    <!-- The primary full-screen view. This can be replaced with whatever view
+    <!-- Date: 16/02/2017
+         Wanda: The primary full-screen view. This can be replaced with whatever view
          is needed to present your content, e.g. VideoView, SurfaceView,
          TextureView, etc. -->
 
-    <!-- This FrameLayout insets its children based on system windows using
+    <!-- Date: 16/02/2017
+         Wanda: This FrameLayout insets its children based on system windows using
          android:fitsSystemWindows. -->
     <WebView
         android:layout_width="match_parent"
