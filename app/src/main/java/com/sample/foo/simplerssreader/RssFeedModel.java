@@ -1,42 +1,51 @@
 package com.sample.foo.simplerssreader;
 
 import android.net.Uri;
-import android.util.Log;
+
+import com.google.common.base.CharMatcher;
 
 import org.apache.commons.lang.StringEscapeUtils;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
 
-
-public class RssFeedModel {
+class RssFeedModel {
 
     public String title;
-    public String link;
-    public String description;
-    public Uri thumbnailUri;
+    String link;
+    String description;
+    Uri thumbnailUri;
 
-    /* Date: 16/02/2017
-    Wanda: Trims the tab spaces and parses out the image within the description
-    so only the proper description is shown in the UI */
-    String parseDescription(String description) {
-        String parsed = description;
-        parsed = parsed.replaceAll("<img.*\\/>", "");
-        parsed = parsed.replaceAll("<p>", "");
-        parsed = parsed.replaceAll("<\\/p>", "");
-        parsed = parsed.trim();
-
-        /* Date: 16/02/2017
-        Wanda: Changes unicode to their respective escape character */
-        parsed = StringEscapeUtils.unescapeXml(parsed);
-        parsed = StringEscapeUtils.unescapeHtml(parsed);
-        return parsed;
+    /**
+     * Unescapes and trims title for feed item.
+     *
+     * @param title the title
+     * @return the title, unescaped and trimmed
+     */
+    private String parseTitle(String title) {
+        String parse = title;
+        parse = StringEscapeUtils.unescapeXml(parse);
+        parse = StringEscapeUtils.unescapeHtml(parse);
+        parse = CharMatcher.WHITESPACE.trimFrom(parse);
+        return parse;
     }
 
-    public RssFeedModel(String title, String link, String description, String thumbnailUri) {
-        this.title = title;
+    /**
+     * Parses html description of the feed item for text.
+     *
+     * @param description plain text description or html description
+     * @return the text content of the description
+     */
+    private String parseDescription(String description) {
+        Document doc = Jsoup.parse(description);
+        String parse = doc.text();
+        parse = CharMatcher.WHITESPACE.trimFrom(parse);
+        return parse;
+    }
+
+    RssFeedModel(String title, String link, String description, String thumbnailUri) {
+        this.title = this.parseTitle(title);
         this.link = link;
-        this.description = this.parseDescription(description);
+        if (description != null) this.description = this.parseDescription(description);
         if (thumbnailUri != null) this.thumbnailUri = Uri.parse(thumbnailUri);
-    }
-    public void printArticle(){
-        Log.d("RSSReedModel",title + " " + link + " "+ description + " " + thumbnailUri);
     }
 }
