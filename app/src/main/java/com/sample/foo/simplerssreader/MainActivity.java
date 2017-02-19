@@ -35,6 +35,7 @@ import java.io.InputStream;
 import java.net.URL;
 import java.net.URLConnection;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
@@ -333,7 +334,7 @@ public class MainActivity extends AppCompatActivity {
             }
             mFeedTitleTextView.setText("Feed Title: " + mFeedTitle);
             mFeedDescriptionTextView.setText("Feed Description: " + mFeedDescription);
-            urlLink = mEditText.getText().toString();
+            urlLink = mEditText.getText().toString().toLowerCase();
         }
 
         @Override
@@ -342,23 +343,29 @@ public class MainActivity extends AppCompatActivity {
                 return false;
 
             /* Date: 16/02/2017
-            Wanda: If the URL entered does not have an http or https associated with it, it will
-            load the proper one for the website so the articles can be pulled and it does not get
-            displayed as invalid RSS feed url */
+            Wanda: If the URL entered does not have an http or https and/or www. associated with it,
+            it will load the proper one for the website so the articles can be pulled and it does
+            not get displayed as invalid RSS feed url */
             try {
-                InputStream stream;
+                InputStream stream = null;
                 Boolean hasNoProtocol = !urlLink.startsWith("http://") && !urlLink.startsWith("https://");
                 if (hasNoProtocol) {
-                    URL httpUrl = new URL("http://" + urlLink);
-                    URL httpsUrl = new URL("https://" + urlLink);
-                    try {
-                        URLConnection connection = httpsUrl.openConnection();
-                        connection.setConnectTimeout(3000);
-                        stream = connection.getInputStream();
-                    } catch (Exception e) {
-                        URLConnection connection = httpUrl.openConnection();
-                        connection.setConnectTimeout(3000);
-                        stream = connection.getInputStream();
+                    ArrayList<URL> possibleUrls = new ArrayList<>(Arrays.asList(
+                            new URL("http://" + urlLink),
+                            new URL("https://" + urlLink),
+                            new URL("https://www." + urlLink),
+                            new URL("http://www." + urlLink)));
+                    for (URL url : possibleUrls) {
+                        try {
+                            URLConnection connection = url.openConnection();
+                            connection.setConnectTimeout(500);
+                            stream = connection.getInputStream();
+                            /* Date: 19/02/2017
+                            Wanda: If there's no exception thrown we use the stream */
+                            break;
+                        } catch (Exception e) {
+                            Log.e(TAG, "Error", e);
+                        }
                     }
                 } else {
                     URL url = new URL(urlLink);
@@ -366,9 +373,7 @@ public class MainActivity extends AppCompatActivity {
                 }
                 mFeedModelList = parseFeed(stream);
                 return true;
-            } catch (IOException e) {
-                Log.e(TAG, "Error", e);
-            } catch (XmlPullParserException e) {
+            } catch (IOException | XmlPullParserException e) {
                 Log.e(TAG, "Error", e);
             }
             return false;
