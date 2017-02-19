@@ -263,7 +263,6 @@ public class MainActivity extends AppCompatActivity {
                         }
                         Log.d("MainActivity",title+ " " + link + " "+ description + " " + thumbUrl);
                         RssFeedModel item = new RssFeedModel(title, link, description, thumbUrl);
-                        item.printArticle();
                         items.add(item);
                     } else {
                         mFeedTitle = title;
