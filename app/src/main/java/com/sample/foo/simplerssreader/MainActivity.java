@@ -351,9 +351,9 @@ public class MainActivity extends AppCompatActivity {
                 Boolean hasNoProtocol = !urlLink.startsWith("http://") && !urlLink.startsWith("https://");
                 if (hasNoProtocol) {
                     ArrayList<URL> possibleUrls = new ArrayList<>(Arrays.asList(
-                            new URL("http://" + urlLink),
                             new URL("https://" + urlLink),
                             new URL("https://www." + urlLink),
+                            new URL("http://" + urlLink),
                             new URL("http://www." + urlLink)));
                     for (URL url : possibleUrls) {
                         try {
