@@ -181,7 +181,7 @@ public class MainActivity extends AppCompatActivity {
         if (id == R.id.Random) {
             return true;
         }
-        //opens up the pop-up window to add a folder if selected 
+        //opens up the pop-up window to add a folder if selected
         if (id == R.id.Add){
             startActivity(new Intent(MainActivity.this, Pop.class));
             return true;
