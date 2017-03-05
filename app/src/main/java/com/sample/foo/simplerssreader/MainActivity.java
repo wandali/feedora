@@ -1,5 +1,6 @@
 package com.sample.foo.simplerssreader;
 
+import android.content.Intent;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.support.v4.widget.DrawerLayout;
@@ -53,6 +54,8 @@ public class MainActivity extends AppCompatActivity {
     private TextView mFeedTitleTextView;
     private TextView mFeedDescriptionTextView;
 
+    private Button closeButton;
+
     private List<RssFeedModel> mFeedModelList;
     private String mFeedTitle;
     private String mFeedDescription;
@@ -70,6 +73,7 @@ public class MainActivity extends AppCompatActivity {
         mDrawerLayout = (DrawerLayout) findViewById(R.id.drawerLayout);
         mToggle = new ActionBarDrawerToggle(this, mDrawerLayout, R.string.open, R.string.close);
 
+
         mDrawerLayout.addDrawerListener(mToggle);
         mToggle.syncState();
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
@@ -80,6 +84,9 @@ public class MainActivity extends AppCompatActivity {
         mSwipeLayout = (SwipeRefreshLayout) findViewById(R.id.swipeRefreshLayout);
         mFeedTitleTextView = (TextView) findViewById(R.id.feedTitle);
         mFeedDescriptionTextView = (TextView) findViewById(R.id.feedDescription);
+
+
+
 
         mRecyclerView.setLayoutManager(new LinearLayoutManager(this));
 
@@ -128,6 +135,13 @@ public class MainActivity extends AppCompatActivity {
 
         client = new GoogleApiClient.Builder(this).addApi(AppIndex.API).build();
     }
+
+
+    //this is to open up a popup on the application
+    public void doThis(MenuItem item){
+        startActivity(new Intent(MainActivity.this, Pop.class));
+    }
+
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         /* Date: 16/02/2017
@@ -165,6 +179,11 @@ public class MainActivity extends AppCompatActivity {
             return true;
         }
         if (id == R.id.Random) {
+            return true;
+        }
+        //opens up the pop-up window to add a folder if selected 
+        if (id == R.id.Add){
+            startActivity(new Intent(MainActivity.this, Pop.class));
             return true;
         }
 
