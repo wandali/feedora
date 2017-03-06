@@ -31,7 +31,7 @@ Francis: This xml implements the top right menu. It was never there before -->
                 android:orderInCategory="104"/>
             <!--add folder item -->
             <item android:id="@+id/Add"
-                android:title="ADD"
+                android:title="Create Folder"
                 android:orderInCategory="105"/>
         </menu>
     </item>

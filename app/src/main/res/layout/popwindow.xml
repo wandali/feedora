@@ -1,29 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="match_parent" android:layout_height="match_parent"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
     android:animationCache="false"
-    android:background="@color/colorPrimary">
-
-    <EditText
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:inputType="textPersonName"
-        android:text="Create Folder "
-        android:ems="10"
-        android:id="@+id/editText3"
-        android:layout_below="@+id/editText4"
-        android:layout_centerHorizontal="true"
-        android:layout_marginTop="23dp" />
-
-    <Button
-        android:text="Cancel"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:id="@+id/cancelButton"
-        android:layout_marginStart="13dp"
-        android:layout_below="@+id/editText3"
-        android:layout_alignStart="@+id/editText3"
-        android:layout_marginTop="22dp" />
+    android:background="#C0000000">
 
     <Button
         android:text="OK"
@@ -33,5 +14,34 @@
         android:layout_alignBaseline="@+id/cancelButton"
         android:layout_alignBottom="@+id/cancelButton"
         android:layout_toEndOf="@+id/cancelButton" />
+
+    <TextView
+        android:text="Create a Folder "
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/Title "
+        android:textSize="30sp"
+        android:layout_alignEnd="@+id/okButton" />
+
+    <EditText
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:inputType="textPersonName"
+        android:ems="10"
+        android:id="@+id/editText3"
+        android:layout_marginTop="32dp"
+        android:layout_below="@+id/Title "
+        android:layout_centerHorizontal="true"
+        tools:text="Enter Name" />
+
+    <Button
+        android:text="Cancel"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/cancelButton"
+        android:layout_marginStart="11dp"
+        android:layout_marginTop="15dp"
+        android:layout_below="@+id/editText3"
+        android:layout_alignStart="@+id/editText3" />
 
 </RelativeLayout>

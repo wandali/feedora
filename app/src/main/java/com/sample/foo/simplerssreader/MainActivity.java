@@ -22,6 +22,8 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
+import android.view.View;
+import android.view.View.OnClickListener;
 
 import com.google.android.gms.appindexing.Action;
 import com.google.android.gms.appindexing.AppIndex;
@@ -53,8 +55,6 @@ public class MainActivity extends AppCompatActivity {
     private SwipeRefreshLayout mSwipeLayout;
     private TextView mFeedTitleTextView;
     private TextView mFeedDescriptionTextView;
-
-    private Button closeButton;
 
     private List<RssFeedModel> mFeedModelList;
     private String mFeedTitle;
@@ -139,8 +139,10 @@ public class MainActivity extends AppCompatActivity {
 
     //this is to open up a popup on the application
     public void doThis(MenuItem item){
+
         startActivity(new Intent(MainActivity.this, Pop.class));
     }
+
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
