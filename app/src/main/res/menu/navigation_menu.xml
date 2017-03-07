@@ -5,16 +5,8 @@
         android:title="Home">
     </item>
 
-    <item android:id="@+id/nav_space"
-        android:title="">
-    </item>
-
     <item android:id="@+id/nav_allFolder"
         android:title="Folders">
         <!-- android:onClick="doThis"> -->
-    </item>
-
-    <item android:id="@+id/nav_account"
-        android:title="My Account">
     </item>
 </menu>
