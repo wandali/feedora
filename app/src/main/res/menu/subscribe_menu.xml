@@ -1,17 +1,9 @@
 <!-- Date: 16/02/2017
 Francis: This XML establishes the subscribe menu and its buttons -->
-<menu xmlns:android="http://schemas.android.com/apk/res/android" >
-
-    <item
-        android:id="@+id/one"
-        android:title="One"/>
-
-    <item
-        android:id="@+id/two"
-        android:title="Two"/>
-
-    <item
-        android:id="@+id/three"
-        android:title="Three"/>
-
+<menu xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:android="http://schemas.android.com/apk/res/android" >
+    <item android:id="@+id/Add"
+        android:title="Create Folder"
+        android:orderInCategory="105"
+        android:checkable="false" />
 </menu>
