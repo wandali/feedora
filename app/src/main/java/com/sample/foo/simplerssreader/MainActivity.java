@@ -60,15 +60,11 @@ public class MainActivity extends AppCompatActivity {
     private List<RssFeedModel> mFeedModelList;
     private String mFeedTitle;
     private String mFeedDescription;
-    /**
-     * ATTENTION: This was auto-generated to implement the App Indexing API.
-     * See https://g.co/AppIndexing/AndroidStudio for more information.
-     */
-    private GoogleApiClient client;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        final MainActivity self = this;
         setContentView(R.layout.activity_main);
 
         mDrawerLayout = (DrawerLayout) findViewById(R.id.drawerLayout);
@@ -85,9 +81,6 @@ public class MainActivity extends AppCompatActivity {
         mSwipeLayout = (SwipeRefreshLayout) findViewById(R.id.swipeRefreshLayout);
         mFeedTitleTextView = (TextView) findViewById(R.id.feedTitle);
         mFeedDescriptionTextView = (TextView) findViewById(R.id.feedDescription);
-
-
-
 
         mRecyclerView.setLayoutManager(new LinearLayoutManager(this));
 
@@ -124,17 +117,35 @@ public class MainActivity extends AppCompatActivity {
                 {
                     public boolean onMenuItemClick(MenuItem item)
                     {
+                        self.openCreateFolder();
                         return true;
                     }
                 });
+
                 popup.show();
             }
         });
-        /* Date: 16/02/2017
-        Francis: ATTENTION: This was auto-generated to implement the App Indexing API.
-        See https://g.co/AppIndexing/AndroidStudio for more information. */
+    }
 
-        client = new GoogleApiClient.Builder(this).addApi(AppIndex.API).build();
+    public void openCreateFolder() {
+        View viewInflated = LayoutInflater
+                .from(this)
+                .inflate(R.layout.dialog_text_input, (ViewGroup) findViewById(android.R.id.content), false);
+        final EditText input = (EditText) viewInflated.findViewById(R.id.input);
+
+        new AlertDialog.Builder(this)
+                .setTitle("Create a Folder")
+                .setView(viewInflated)
+                .setPositiveButton("Create", new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int whichButton) {
+                        String url = input.getText().toString();
+                    }
+                })
+                .setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int whichButton) {
+                    }
+                })
+                .show();
     }
 
 
@@ -177,29 +188,6 @@ public class MainActivity extends AppCompatActivity {
         if (id == R.id.Random) {
             return true;
         }
-        //opens up the pop-up window to add a folder if selected
-        if (id == R.id.Add){
-            View viewInflated = LayoutInflater
-                    .from(this)
-                    .inflate(R.layout.dialog_text_input, (ViewGroup) findViewById(android.R.id.content), false);
-            final EditText input = (EditText) viewInflated.findViewById(R.id.input);
-
-            new AlertDialog.Builder(this)
-                    .setTitle("Create a Folder")
-                    .setView(viewInflated)
-                    .setPositiveButton("Create", new DialogInterface.OnClickListener() {
-                        public void onClick(DialogInterface dialog, int whichButton) {
-                            String url = input.getText().toString();
-                        }
-                    })
-                    .setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
-                        public void onClick(DialogInterface dialog, int whichButton) {
-                        }
-                    })
-                    .show();
-            return true;
-        }
-
         return super.onOptionsItemSelected(item);
     }
     public List<RssFeedModel> parseFeed(InputStream inputStream) throws XmlPullParserException, IOException {
@@ -315,42 +303,6 @@ public class MainActivity extends AppCompatActivity {
         } finally {
             inputStream.close();
         }
-    }
-
-    /**
-     * ATTENTION: This was auto-generated to implement the App Indexing API.
-     * See https://g.co/AppIndexing/AndroidStudio for more information.
-     */
-    public Action getIndexApiAction() {
-        Thing object = new Thing.Builder()
-                .setName("Main Page") // TODO: Define a title for the content shown.
-                // TODO: Make sure this auto-generated URL is correct.
-                .setUrl(Uri.parse("http://[ENTER-YOUR-URL-HERE]"))
-                .build();
-        return new Action.Builder(Action.TYPE_VIEW)
-                .setObject(object)
-                .setActionStatus(Action.STATUS_TYPE_COMPLETED)
-                .build();
-    }
-
-    @Override
-    public void onStart() {
-        super.onStart();
-
-        // ATTENTION: This was auto-generated to implement the App Indexing API.
-        // See https://g.co/AppIndexing/AndroidStudio for more information.
-        client.connect();
-        AppIndex.AppIndexApi.start(client, getIndexApiAction());
-    }
-
-    @Override
-    public void onStop() {
-        super.onStop();
-
-        // ATTENTION: This was auto-generated to implement the App Indexing API.
-        // See https://g.co/AppIndexing/AndroidStudio for more information.
-        AppIndex.AppIndexApi.end(client, getIndexApiAction());
-        client.disconnect();
     }
 
     private class FetchFeedTask extends AsyncTask<Void, Void, Boolean> {
