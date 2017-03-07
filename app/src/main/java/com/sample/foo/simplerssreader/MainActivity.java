@@ -1,6 +1,7 @@
 package com.sample.foo.simplerssreader;
 
-import android.content.Intent;
+import android.app.AlertDialog;
+import android.content.DialogInterface;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.support.v4.widget.DrawerLayout;
@@ -14,9 +15,11 @@ import android.support.v7.widget.RecyclerView;
 import android.text.TextUtils;
 import android.util.Log;
 import android.util.Xml;
+import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.EditText;
@@ -53,8 +56,6 @@ public class MainActivity extends AppCompatActivity {
     private SwipeRefreshLayout mSwipeLayout;
     private TextView mFeedTitleTextView;
     private TextView mFeedDescriptionTextView;
-
-    private Button closeButton;
 
     private List<RssFeedModel> mFeedModelList;
     private String mFeedTitle;
@@ -137,11 +138,6 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
-    //this is to open up a popup on the application
-    public void doThis(MenuItem item){
-        startActivity(new Intent(MainActivity.this, Pop.class));
-    }
-
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         /* Date: 16/02/2017
@@ -183,7 +179,24 @@ public class MainActivity extends AppCompatActivity {
         }
         //opens up the pop-up window to add a folder if selected
         if (id == R.id.Add){
-            startActivity(new Intent(MainActivity.this, Pop.class));
+            View viewInflated = LayoutInflater
+                    .from(this)
+                    .inflate(R.layout.dialog_text_input, (ViewGroup) findViewById(android.R.id.content), false);
+            final EditText input = (EditText) viewInflated.findViewById(R.id.input);
+
+            new AlertDialog.Builder(this)
+                    .setTitle("Create a Folder")
+                    .setView(viewInflated)
+                    .setPositiveButton("Create", new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int whichButton) {
+                            String url = input.getText().toString();
+                        }
+                    })
+                    .setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int whichButton) {
+                        }
+                    })
+                    .show();
             return true;
         }
 
