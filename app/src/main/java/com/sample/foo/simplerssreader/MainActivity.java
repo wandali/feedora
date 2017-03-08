@@ -2,7 +2,6 @@ package com.sample.foo.simplerssreader;
 
 import android.app.AlertDialog;
 import android.content.DialogInterface;
-import android.net.Uri;
 import android.os.AsyncTask;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v4.widget.SwipeRefreshLayout;
@@ -25,11 +24,6 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
-
-import com.google.android.gms.appindexing.Action;
-import com.google.android.gms.appindexing.AppIndex;
-import com.google.android.gms.appindexing.Thing;
-import com.google.android.gms.common.api.GoogleApiClient;
 
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
@@ -56,6 +50,7 @@ public class MainActivity extends AppCompatActivity {
     private SwipeRefreshLayout mSwipeLayout;
     private TextView mFeedTitleTextView;
     private TextView mFeedDescriptionTextView;
+    private View mPlusIconView;
 
     private List<RssFeedModel> mFeedModelList;
     private String mFeedTitle;
@@ -81,6 +76,14 @@ public class MainActivity extends AppCompatActivity {
         mSwipeLayout = (SwipeRefreshLayout) findViewById(R.id.swipeRefreshLayout);
         mFeedTitleTextView = (TextView) findViewById(R.id.feedTitle);
         mFeedDescriptionTextView = (TextView) findViewById(R.id.feedDescription);
+        mPlusIconView = findViewById(R.id.menu).findViewById(R.id.plus);
+
+        mPlusIconView.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                self.openCreateFolder();
+            }
+        });
 
         mRecyclerView.setLayoutManager(new LinearLayoutManager(this));
 
