@@ -7,13 +7,20 @@ import com.google.common.base.CharMatcher;
 import org.apache.commons.lang.StringEscapeUtils;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
+import java.util.Date;
 
 class RssFeedModel {
 
     public String title;
-    String link;
-    String description;
+    public String link;
+    public String description;
     Uri thumbnailUri;
+    public String author;
+    public Date date;
+    /*
+    * need date Created and date Modified
+     */
+
 
     /**
      * Unescapes and trims title for feed item.
@@ -41,10 +48,13 @@ class RssFeedModel {
         parse = CharMatcher.WHITESPACE.trimFrom(parse);
         return parse;
     }
-
-    RssFeedModel(String title, String link, String description, String thumbnailUri) {
+    /* Date: 08/03/2017
+    Jack: Added more parameters and added assigning of the passed in variables to the class variables */
+    RssFeedModel(String title, String link, String description, String thumbnailUri, String author, Date date) {
         this.title = this.parseTitle(title);
         this.link = link;
+        this.author = author;
+        this.date = date;
         if (description != null) this.description = this.parseDescription(description);
         if (thumbnailUri != null) this.thumbnailUri = Uri.parse(thumbnailUri);
     }

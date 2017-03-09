@@ -32,9 +32,14 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 import java.net.URLConnection;
+import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Collections;
+import java.util.Date;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -169,26 +174,37 @@ public class MainActivity extends AppCompatActivity {
 
         /* Date: 16/02/2017
         For no functionality, the below if statement is sufficient. */
-        if(mToggle.onOptionsItemSelected(item)){
+        /*if(mToggle.onOptionsItemSelected(item)){
             return(true);
-        }
+        }*/
 
         /* Date: 16/02/2017
         Francis: A row of if statements to give each button their own functionality later.
         May as well do it now. */
         if (id == R.id.dateCreated) {
+            Collections.sort(mFeedModelList, new Sorting("dateCreated"));
+            mRecyclerView.setAdapter(new RssFeedListAdapter(mFeedModelList));
             return true;
         }
         if (id == R.id.dateModified) {
+            Collections.sort(mFeedModelList, new Sorting("dateModified"));
+            mRecyclerView.setAdapter(new RssFeedListAdapter(mFeedModelList));
             return true;
         }
+
         if (id == R.id.articleTitle) {
+            Collections.sort(mFeedModelList, new Sorting("title"));
+            mRecyclerView.setAdapter(new RssFeedListAdapter(mFeedModelList));
             return true;
         }
         if (id == R.id.Author) {
+            Collections.sort(mFeedModelList, new Sorting("author"));
+            mRecyclerView.setAdapter(new RssFeedListAdapter(mFeedModelList));
             return true;
         }
         if (id == R.id.Random) {
+            Collections.sort(mFeedModelList, new Sorting("random"));
+            mRecyclerView.setAdapter(new RssFeedListAdapter(mFeedModelList));
             return true;
         }
         return super.onOptionsItemSelected(item);
@@ -198,6 +214,9 @@ public class MainActivity extends AppCompatActivity {
         String link = null;
         String description = null;
         String thumbUrl = null;
+        String author = null;
+        Date date = new Date(Long.MIN_VALUE);
+
         boolean isItem = false;
         boolean endItem = false;
         boolean isStart = true;
@@ -256,6 +275,19 @@ public class MainActivity extends AppCompatActivity {
                     case "media:thumbnail":
                         thumbUrl = xmlPullParser.getAttributeValue(null, "url");
                         break;
+                    /* Date: 08/03/2017
+                    Jack: grabs the author name */
+                    case "dc:creator":
+                        author = result;
+                        break;
+                    /*case "pubDate":
+                        DateFormat formatter = new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss zzz");
+                        try {
+                            date = formatter.parse(result);
+                        } catch (ParseException e) {
+                            date = new Date(Long.MIN_VALUE);
+                        }
+                        break;*/
                 }
 
                 if(isStart && isItem){
@@ -286,7 +318,9 @@ public class MainActivity extends AppCompatActivity {
                             title = artTitles.get(numTitle);
                         }
                         Log.d("MainActivity",title+ " " + link + " "+ description + " " + thumbUrl);
-                        RssFeedModel item = new RssFeedModel(title, link, description, thumbUrl);
+                        /* Date: 08/03/2017
+                        Jack: Added more parameters for creating a new item */
+                        RssFeedModel item = new RssFeedModel(title, link, description, thumbUrl, author, date);
                         items.add(item);
                     } else {
                         mFeedTitle = title;
