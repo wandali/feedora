@@ -174,9 +174,9 @@ public class MainActivity extends AppCompatActivity {
 
         /* Date: 16/02/2017
         For no functionality, the below if statement is sufficient. */
-        /*if(mToggle.onOptionsItemSelected(item)){
+        if(mToggle.onOptionsItemSelected(item)){
             return(true);
-        }*/
+        }
 
         /* Date: 16/02/2017
         Francis: A row of if statements to give each button their own functionality later.
