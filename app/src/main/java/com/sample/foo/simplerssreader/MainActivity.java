@@ -182,29 +182,39 @@ public class MainActivity extends AppCompatActivity {
         Francis: A row of if statements to give each button their own functionality later.
         May as well do it now. */
         if (id == R.id.dateCreated) {
-            Collections.sort(mFeedModelList, new Sorting("dateCreated"));
-            mRecyclerView.setAdapter(new RssFeedListAdapter(mFeedModelList));
+            if (mFeedModelList != null) {
+                Collections.sort(mFeedModelList, new Sorting("dateCreated"));
+                mRecyclerView.setAdapter(new RssFeedListAdapter(mFeedModelList));
+            }
             return true;
         }
         if (id == R.id.dateModified) {
-            Collections.sort(mFeedModelList, new Sorting("dateModified"));
-            mRecyclerView.setAdapter(new RssFeedListAdapter(mFeedModelList));
+            if (mFeedModelList != null) {
+                Collections.sort(mFeedModelList, new Sorting("dateModified"));
+                mRecyclerView.setAdapter(new RssFeedListAdapter(mFeedModelList));
+            }
             return true;
         }
 
         if (id == R.id.articleTitle) {
-            Collections.sort(mFeedModelList, new Sorting("title"));
-            mRecyclerView.setAdapter(new RssFeedListAdapter(mFeedModelList));
+            if (mFeedModelList != null) {
+                Collections.sort(mFeedModelList, new Sorting("title"));
+                mRecyclerView.setAdapter(new RssFeedListAdapter(mFeedModelList));
+            }
             return true;
         }
         if (id == R.id.Author) {
-            Collections.sort(mFeedModelList, new Sorting("author"));
-            mRecyclerView.setAdapter(new RssFeedListAdapter(mFeedModelList));
+            if (mFeedModelList != null) {
+                Collections.sort(mFeedModelList, new Sorting("author"));
+                mRecyclerView.setAdapter(new RssFeedListAdapter(mFeedModelList));
+            }
             return true;
         }
         if (id == R.id.Random) {
-            Collections.sort(mFeedModelList, new Sorting("random"));
-            mRecyclerView.setAdapter(new RssFeedListAdapter(mFeedModelList));
+            if (mFeedModelList != null) {
+                Collections.sort(mFeedModelList, new Sorting("random"));
+                mRecyclerView.setAdapter(new RssFeedListAdapter(mFeedModelList));
+            }
             return true;
         }
         return super.onOptionsItemSelected(item);
