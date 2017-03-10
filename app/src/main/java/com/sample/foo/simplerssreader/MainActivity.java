@@ -22,6 +22,7 @@ import android.view.ViewGroup;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -45,6 +46,9 @@ public class MainActivity extends AppCompatActivity {
 
     private static final String TAG = "MainActivity";
 
+    private static String[] subList = new String[15];
+    private static int subTracker=0;
+
     private DrawerLayout mDrawerLayout;
     private ActionBarDrawerToggle mToggle;
 
@@ -61,6 +65,8 @@ public class MainActivity extends AppCompatActivity {
     private String mFeedTitle;
     private String mFeedDescription;
 
+    private LinearLayout mLinearLayout;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -69,7 +75,6 @@ public class MainActivity extends AppCompatActivity {
 
         mDrawerLayout = (DrawerLayout) findViewById(R.id.drawerLayout);
         mToggle = new ActionBarDrawerToggle(this, mDrawerLayout, R.string.open, R.string.close);
-
 
         mDrawerLayout.addDrawerListener(mToggle);
         mToggle.syncState();
@@ -118,6 +123,10 @@ public class MainActivity extends AppCompatActivity {
                 /* Date: 16/02/2017
                 Francis: Inflating the Popup through the xml file */
                 popup.getMenuInflater().inflate(R.menu.subscribe_menu, popup.getMenu());
+                for(int i=0;i<subTracker;++i)
+                {
+                    popup.getMenu().add(Menu.NONE,subTracker,Menu.NONE,subList[i]);
+                }
                 /* Date: 16/02/2017
                 Francis: Registering popup with OnMenuItemClickListener. So you can click on the
                 options */
@@ -125,11 +134,15 @@ public class MainActivity extends AppCompatActivity {
                 {
                     public boolean onMenuItemClick(MenuItem item)
                     {
-                        self.openCreateFolder();
+                        int id = item.getItemId();
+                        if (id == R.id.Add)
+                        {
+                            self.openCreateFolder();
+                            return true;
+                        }
                         return true;
                     }
                 });
-
                 popup.show();
             }
         });
@@ -146,7 +159,19 @@ public class MainActivity extends AppCompatActivity {
                 .setView(viewInflated)
                 .setPositiveButton("Create", new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int whichButton) {
-                        String url = input.getText().toString();
+                        /* Date: 10/03/2017
+                        Francis: Adds the user input to the list of folders. To be established
+                        later. */
+                        String folderName = input.getText().toString();
+
+                        subList[subTracker]=folderName;
+                        ++subTracker;
+
+                        mLinearLayout = (LinearLayout)findViewById(R.id.subFeedList);
+                        TextView customSub = new TextView(MainActivity.this);
+                        customSub.setText(folderName);
+                        customSub.setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+                        mLinearLayout.addView(customSub);
                     }
                 })
                 .setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
