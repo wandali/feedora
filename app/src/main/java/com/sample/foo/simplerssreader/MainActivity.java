@@ -181,24 +181,25 @@ public class MainActivity extends AppCompatActivity {
         /* Date: 16/02/2017
         Francis: A row of if statements to give each button their own functionality later.
         May as well do it now. */
-        if (id == R.id.dateCreated) {
+        if (id == R.id.dateOldest) {
             if (mFeedModelList != null) {
-                Collections.sort(mFeedModelList, new Sorting("dateCreated"));
+                Collections.sort(mFeedModelList, new Sorting("dateOldest"));
                 mRecyclerView.setAdapter(new RssFeedListAdapter(mFeedModelList));
             }
             return true;
         }
-        if (id == R.id.dateModified) {
+        if (id == R.id.articleTitleAZ) {
             if (mFeedModelList != null) {
-                Collections.sort(mFeedModelList, new Sorting("dateModified"));
+                Collections.sort(mFeedModelList, new Sorting("title"));
                 mRecyclerView.setAdapter(new RssFeedListAdapter(mFeedModelList));
             }
             return true;
         }
 
-        if (id == R.id.articleTitle) {
+        if (id == R.id.articleTitleZA) {
             if (mFeedModelList != null) {
                 Collections.sort(mFeedModelList, new Sorting("title"));
+                Collections.reverse(mFeedModelList);
                 mRecyclerView.setAdapter(new RssFeedListAdapter(mFeedModelList));
             }
             return true;
@@ -290,14 +291,16 @@ public class MainActivity extends AppCompatActivity {
                     case "dc:creator":
                         author = result;
                         break;
-                    /*case "pubDate":
-                        DateFormat formatter = new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss zzz");
+                    case "pubDate":
+                        Log.d("MainActivity",result);
+                        /*DateFormat formatter = new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss zzz");
                         try {
+
                             date = formatter.parse(result);
                         } catch (ParseException e) {
                             date = new Date(Long.MIN_VALUE);
-                        }
-                        break;*/
+                        }*/
+                        break;
                 }
 
                 if(isStart && isItem){

@@ -21,10 +21,8 @@ public class Sorting implements Comparator<RssFeedModel> {
 
     @Override
     public int compare(RssFeedModel article1, RssFeedModel article2) {
-        if (sortType.equals("dateCreated")) {
+        if (sortType.equals("dateOldest")) {
             return article1.date.compareTo(article2.date);
-        } else if (sortType.equals("dateModified")) {
-            return article1.title.compareTo(article2.title);
         } else if (sortType.equals("title")) {
             return article1.title.compareTo(article2.title);
         } else if (sortType.equals("author")) {
