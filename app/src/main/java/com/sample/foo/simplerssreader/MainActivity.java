@@ -1,6 +1,7 @@
 package com.sample.foo.simplerssreader;
 
 import android.app.AlertDialog;
+import android.content.Intent;
 import android.content.DialogInterface;
 import android.os.AsyncTask;
 import android.support.v4.widget.DrawerLayout;
@@ -25,6 +26,13 @@ import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
+import java.io.File;
+import android.os.Environment;
+
+
+
+import java.util.ArrayList;
+
 
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
@@ -56,6 +64,7 @@ public class MainActivity extends AppCompatActivity {
     private EditText mEditText;
     private Button mFetchFeedButton;
     private Button subFeedButton;
+    private View mHomeButton;
     private SwipeRefreshLayout mSwipeLayout;
     private TextView mFeedTitleTextView;
     private TextView mFeedDescriptionTextView;
@@ -64,8 +73,10 @@ public class MainActivity extends AppCompatActivity {
     private List<RssFeedModel> mFeedModelList;
     private String mFeedTitle;
     private String mFeedDescription;
-
+    private String folderName;
     private LinearLayout mLinearLayout;
+    private File folder;
+    private LinearLayout view;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -87,6 +98,24 @@ public class MainActivity extends AppCompatActivity {
         mFeedTitleTextView = (TextView) findViewById(R.id.feedTitle);
         mFeedDescriptionTextView = (TextView) findViewById(R.id.feedDescription);
         mPlusIconView = findViewById(R.id.menu).findViewById(R.id.plus);
+        mHomeButton = findViewById(R.id.menu).findViewById(R.id.homeButton);
+
+
+
+
+
+        mHomeButton.setOnClickListener(new View.OnClickListener() {
+         /* Date: 13/03/2017
+            used to set an action listenter to the home button to direct the user to the home screen
+          */
+           @Override
+           public void onClick(View view) {
+               self.goHome();
+
+
+           }
+
+       });
 
         mPlusIconView.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -119,14 +148,22 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View view)
             {
+
+                Log.v("The link you have is:", mEditText.getText().toString());
+
                 PopupMenu popup = new PopupMenu(MainActivity.this,subFeedButton);
                 /* Date: 16/02/2017
                 Francis: Inflating the Popup through the xml file */
                 popup.getMenuInflater().inflate(R.menu.subscribe_menu, popup.getMenu());
+
+
+
                 for(int i=0;i<subTracker;++i)
                 {
                     popup.getMenu().add(Menu.NONE,subTracker,Menu.NONE,subList[i]);
                 }
+
+
                 /* Date: 16/02/2017
                 Francis: Registering popup with OnMenuItemClickListener. So you can click on the
                 options */
@@ -146,6 +183,17 @@ public class MainActivity extends AppCompatActivity {
                 popup.show();
             }
         });
+
+
+
+    }
+
+    /*this is the function that will direct users to the homescreen*/
+    public void goHome() {
+        Intent homeIntent;
+        homeIntent = new Intent(this, MainActivity.class);
+        homeIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+        startActivity(homeIntent);
     }
 
     public void openCreateFolder() {
@@ -160,16 +208,37 @@ public class MainActivity extends AppCompatActivity {
                 .setPositiveButton("Create", new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int whichButton) {
                         /* Date: 10/03/2017
-                        Francis: Adds the user input to the list of folders. To be established
+                    Francis: Adds the user input to the list of folders. To be established
                         later. */
-                        String folderName = input.getText().toString();
+                        folderName = input.getText().toString().trim();
 
-                        subList[subTracker]=folderName;
-                        ++subTracker;
+                        //String fileName = fullPath.substring ( fullPath.indexOf ( "/" ) + 1 );
+
+                        String extStore = Environment.getExternalStorageDirectory()+ "/";
+                        File folder = new File(extStore+ folderName);
+                        //File folder = new File(Environment.getExternalStorageDirectory().getA + "app/"+ folderName);
+
+
+                        if (!folder.isDirectory())
+                        //if((!Arrays.asList(subList).contains(folderName)) && (folder.exists() == false))
+                        {
+                            folder.mkdirs();
+                            //currently the 'folders' (strings) are being displayed through this list
+                            subList[subTracker]=folderName;
+                            ++subTracker;
+                            Toast.makeText(MainActivity.this, "Created new folder", Toast.LENGTH_LONG).show();
+
+                        }
+                        //don't want multiple folders with same name
+                        else
+                        {
+                            Toast.makeText(MainActivity.this, "Folder already exists", Toast.LENGTH_LONG).show();
+                        }
+
 
                         mLinearLayout = (LinearLayout)findViewById(R.id.subFeedList);
                         TextView customSub = new TextView(MainActivity.this);
-                        customSub.setText(folderName);
+                        customSub.setText(folder.toString());
                         customSub.setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
                         mLinearLayout.addView(customSub);
                     }
