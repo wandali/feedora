@@ -17,9 +17,12 @@ import android.util.Xml;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.inputmethod.InputMethodManager;
+import android.widget.ArrayAdapter;
+import android.widget.AutoCompleteTextView;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.LinearLayout;
@@ -52,9 +55,7 @@ public class MainActivity extends AppCompatActivity {
 
     private DrawerLayout mDrawerLayout;
     private ActionBarDrawerToggle mToggle;
-
     private RecyclerView mRecyclerView;
-    private EditText mEditText;
     private Button mFetchFeedButton;
     private Button subFeedButton;
     private SwipeRefreshLayout mSwipeLayout;
@@ -62,6 +63,10 @@ public class MainActivity extends AppCompatActivity {
     private TextView mFeedDescriptionTextView;
     private View mPlusIconView;
     private View mHomeButton;
+
+    private AutoCompleteTextView mEditText;
+    private ArrayAdapter<String> mAdapter;
+    private List<String> mHistoryList;
 
     private List<RssFeedModel> mFeedModelList;
     private String mFeedTitle;
@@ -82,7 +87,6 @@ public class MainActivity extends AppCompatActivity {
         mToggle.syncState();
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         mRecyclerView = (RecyclerView) findViewById(R.id.recyclerView);
-        mEditText = (EditText) findViewById(R.id.rssFeedEditText);
         mFetchFeedButton = (Button) findViewById(R.id.fetchFeedButton);
         subFeedButton = (Button) findViewById(R.id.subFeedButton);
         mSwipeLayout = (SwipeRefreshLayout) findViewById(R.id.swipeRefreshLayout);
@@ -90,6 +94,23 @@ public class MainActivity extends AppCompatActivity {
         mFeedDescriptionTextView = (TextView) findViewById(R.id.feedDescription);
         mPlusIconView = findViewById(R.id.menu).findViewById(R.id.plus);
         mHomeButton = findViewById(R.id.menu).findViewById(R.id.homeButton);
+
+        /*Date: 16/03/2017
+        * Joline: This is for the history set up, used AutoCompleteTextView. mEditText, used to be
+        * of type "Edit Text" kept name and tag id in case used elsewhere in program*/
+        mEditText = (AutoCompleteTextView) findViewById(R.id.rssFeedEditText);
+        mHistoryList = new ArrayList<>();
+        mAdapter = new ArrayAdapter<>(this, android.R.layout.simple_dropdown_item_1line,mHistoryList);
+        mEditText.setThreshold(0);
+        mEditText.enoughToFilter();
+        mEditText.setAdapter(mAdapter);
+        mEditText.setOnTouchListener(new View.OnTouchListener(){
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
+                mEditText.showDropDown();
+                return false;
+            }
+        });
 
         mPlusIconView.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -450,6 +471,7 @@ public class MainActivity extends AppCompatActivity {
                     stream = url.openConnection().getInputStream();
                 }
                 mFeedModelList = parseFeed(stream);
+                updateHistory(urlLink);
                 return true;
             } catch (IOException | XmlPullParserException e) {
                 Log.e(TAG, "Error", e);
@@ -457,6 +479,20 @@ public class MainActivity extends AppCompatActivity {
             return false;
         }
 
+        /*Date: 16/03/2017
+        * Joline: This function updates the adapter and history list by adding the
+        * most recent accepted url submitted by the user. Shows the most recent url first*/
+        public void updateHistory(String feedURL){
+            if(!mHistoryList.contains(feedURL)){
+                if(mHistoryList.size() == 5){
+                    mHistoryList.remove(4);
+                }
+                mHistoryList.add(0,feedURL);
+                mAdapter.clear();
+                mAdapter.addAll(mHistoryList);
+                mAdapter.notifyDataSetChanged();
+            }
+        }
 
         @Override
         protected void onPostExecute(Boolean success) {
