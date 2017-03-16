@@ -157,11 +157,18 @@ public class MainActivity extends AppCompatActivity {
                 popup.getMenuInflater().inflate(R.menu.subscribe_menu, popup.getMenu());
 
 
+                File folder = new File(Environment.getExternalStorageDirectory().getAbsolutePath());
 
-                for(int i=0;i<subTracker;++i)
+                for(int i=0;i<folder.listFiles().length;++i)
                 {
-                    popup.getMenu().add(Menu.NONE,subTracker,Menu.NONE,subList[i]);
+
+                    subTracker = i;
+                    String name=folder.getName();
+
+                    popup.getMenu().add(Menu.NONE,subTracker,Menu.NONE,folder.toString());
+
                 }
+
 
 
                 /* Date: 16/02/2017
@@ -214,19 +221,33 @@ public class MainActivity extends AppCompatActivity {
 
                         //String fileName = fullPath.substring ( fullPath.indexOf ( "/" ) + 1 );
 
-                        String extStore = Environment.getExternalStorageDirectory()+ "/";
-                        File folder = new File(extStore+ folderName);
+                        //String extStore = Environment.getExternalStorageDirectory()+ "/";
+                        File folder = new File(Environment.getExternalStorageDirectory()+folderName);
                         //File folder = new File(Environment.getExternalStorageDirectory().getA + "app/"+ folderName);
 
 
-                        if (!folder.isDirectory())
+                        if (!folder.exists())
                         //if((!Arrays.asList(subList).contains(folderName)) && (folder.exists() == false))
                         {
-                            folder.mkdirs();
+                            if(folder.mkdirs()==true) {
+
+                            }
+                            else if (folder.mkdirs()==false)
+                            {
+                                Log.d("STATE", Environment.getExternalStorageState());
+                                Log.d("PATH", folder.getAbsolutePath());
+                                Log.d("MAKE DIR", folder.mkdirs() + "");
+                            }
                             //currently the 'folders' (strings) are being displayed through this list
                             subList[subTracker]=folderName;
                             ++subTracker;
                             Toast.makeText(MainActivity.this, "Created new folder", Toast.LENGTH_LONG).show();
+
+                            mLinearLayout = (LinearLayout)findViewById(R.id.subFeedList);
+                            TextView customSub = new TextView(MainActivity.this);
+                            customSub.setText(folder.toString());
+                            customSub.setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+                            mLinearLayout.addView(customSub);
 
                         }
                         //don't want multiple folders with same name
@@ -236,11 +257,7 @@ public class MainActivity extends AppCompatActivity {
                         }
 
 
-                        mLinearLayout = (LinearLayout)findViewById(R.id.subFeedList);
-                        TextView customSub = new TextView(MainActivity.this);
-                        customSub.setText(folder.toString());
-                        customSub.setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
-                        mLinearLayout.addView(customSub);
+
                     }
                 })
                 .setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
