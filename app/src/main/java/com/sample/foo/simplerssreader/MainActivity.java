@@ -287,19 +287,22 @@ public class MainActivity extends AppCompatActivity {
                         thumbUrl = xmlPullParser.getAttributeValue(null, "url");
                         break;
                     /* Date: 08/03/2017
+                    Incoming #3008
                     Jack: grabs the author name */
                     case "dc:creator":
                         author = result;
                         break;
-                    case "pubDate":
-                        Log.d("MainActivity",result);
-                        /*DateFormat formatter = new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss zzz");
+                    /* Date: 08/03/2017
+                    Incoming #3007
+                    Jack: grabs and parses the date */
+                    case "pubdate":
+                        DateFormat formatter = new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss zzz");
                         try {
 
                             date = formatter.parse(result);
                         } catch (ParseException e) {
                             date = new Date(Long.MIN_VALUE);
-                        }*/
+                        }
                         break;
                 }
 
@@ -330,7 +333,7 @@ public class MainActivity extends AppCompatActivity {
                         else{
                             title = artTitles.get(numTitle);
                         }
-                        Log.d("MainActivity",title+ " " + link + " "+ description + " " + thumbUrl);
+                        //Log.d("MainActivity",title+ " " + link + " "+ description + " " + thumbUrl);
                         /* Date: 08/03/2017
                         Jack: Added more parameters for creating a new item */
                         RssFeedModel item = new RssFeedModel(title, link, description, thumbUrl, author, date);
