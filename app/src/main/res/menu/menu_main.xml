@@ -12,15 +12,15 @@ Francis: This xml implements the top right menu. It was never there before -->
         android:icon="@android:drawable/ic_menu_sort_by_size"
         android:title="">
         <menu>
-            <item android:id="@+id/dateCreated"
-                android:title="Date Created"
+            <item android:id="@+id/dateOldest"
+                android:title="Oldest first"
                 android:orderInCategory="100"
                 app:showAsAction="never" />
-            <item android:id="@+id/dateModified"
-                android:title="Date Modified"
+            <item android:id="@+id/articleTitleAZ"
+                android:title="Alphabetic"
                 android:orderInCategory="101" />
-            <item android:id="@+id/articleTitle"
-                android:title="Article Title"
+            <item android:id="@+id/articleTitleZA"
+                android:title="Alphabetic(reverse)"
                 android:orderInCategory="102" />
             <item
                 android:id="@+id/Author"

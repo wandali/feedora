@@ -206,24 +206,25 @@ public class MainActivity extends AppCompatActivity {
         /* Date: 16/02/2017
         Francis: A row of if statements to give each button their own functionality later.
         May as well do it now. */
-        if (id == R.id.dateCreated) {
+        if (id == R.id.dateOldest) {
             if (mFeedModelList != null) {
-                Collections.sort(mFeedModelList, new Sorting("dateCreated"));
+                Collections.sort(mFeedModelList, new Sorting("dateOldest"));
                 mRecyclerView.setAdapter(new RssFeedListAdapter(mFeedModelList));
             }
             return true;
         }
-        if (id == R.id.dateModified) {
+        if (id == R.id.articleTitleAZ) {
             if (mFeedModelList != null) {
-                Collections.sort(mFeedModelList, new Sorting("dateModified"));
+                Collections.sort(mFeedModelList, new Sorting("title"));
                 mRecyclerView.setAdapter(new RssFeedListAdapter(mFeedModelList));
             }
             return true;
         }
 
-        if (id == R.id.articleTitle) {
+        if (id == R.id.articleTitleZA) {
             if (mFeedModelList != null) {
                 Collections.sort(mFeedModelList, new Sorting("title"));
+                Collections.reverse(mFeedModelList);
                 mRecyclerView.setAdapter(new RssFeedListAdapter(mFeedModelList));
             }
             return true;
@@ -311,18 +312,23 @@ public class MainActivity extends AppCompatActivity {
                         thumbUrl = xmlPullParser.getAttributeValue(null, "url");
                         break;
                     /* Date: 08/03/2017
+                    Incoming #3008
                     Jack: grabs the author name */
                     case "dc:creator":
                         author = result;
                         break;
-                    /*case "pubDate":
+                    /* Date: 08/03/2017
+                    Incoming #3007
+                    Jack: grabs and parses the date */
+                    case "pubdate":
                         DateFormat formatter = new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss zzz");
                         try {
+
                             date = formatter.parse(result);
                         } catch (ParseException e) {
                             date = new Date(Long.MIN_VALUE);
                         }
-                        break;*/
+                        break;
                 }
 
                 if(isStart && isItem){
@@ -352,7 +358,7 @@ public class MainActivity extends AppCompatActivity {
                         else{
                             title = artTitles.get(numTitle);
                         }
-                        Log.d("MainActivity",title+ " " + link + " "+ description + " " + thumbUrl);
+                        //Log.d("MainActivity",title+ " " + link + " "+ description + " " + thumbUrl);
                         /* Date: 08/03/2017
                         Jack: Added more parameters for creating a new item */
                         RssFeedModel item = new RssFeedModel(title, link, description, thumbUrl, author, date);

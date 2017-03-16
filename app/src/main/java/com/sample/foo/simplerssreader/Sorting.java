@@ -7,6 +7,10 @@ import java.util.Random;
  * Date: 08/03/2017
  * Jack: Created a class for the sorting algorithms used in the application
  *
+ * Incoming #3007
+ * Incoming #3008
+ * Incoming #3009
+ * Jack: Returns values used for sorting the articles.
  */
 
 public class Sorting implements Comparator<RssFeedModel> {
@@ -21,10 +25,8 @@ public class Sorting implements Comparator<RssFeedModel> {
 
     @Override
     public int compare(RssFeedModel article1, RssFeedModel article2) {
-        if (sortType.equals("dateCreated")) {
+        if (sortType.equals("dateOldest")) {
             return article1.date.compareTo(article2.date);
-        } else if (sortType.equals("dateModified")) {
-            return article1.title.compareTo(article2.title);
         } else if (sortType.equals("title")) {
             return article1.title.compareTo(article2.title);
         } else if (sortType.equals("author")) {
