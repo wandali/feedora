@@ -25,6 +25,7 @@ import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
+import android.content.Intent;
 
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
@@ -60,6 +61,7 @@ public class MainActivity extends AppCompatActivity {
     private TextView mFeedTitleTextView;
     private TextView mFeedDescriptionTextView;
     private View mPlusIconView;
+    private View mHomeButton;
 
     private List<RssFeedModel> mFeedModelList;
     private String mFeedTitle;
@@ -87,6 +89,7 @@ public class MainActivity extends AppCompatActivity {
         mFeedTitleTextView = (TextView) findViewById(R.id.feedTitle);
         mFeedDescriptionTextView = (TextView) findViewById(R.id.feedDescription);
         mPlusIconView = findViewById(R.id.menu).findViewById(R.id.plus);
+        mHomeButton = findViewById(R.id.menu).findViewById(R.id.homeButton);
 
         mPlusIconView.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -107,6 +110,12 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onRefresh() {
                 new FetchFeedTask().execute((Void) null);
+            }
+        });
+        mHomeButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                self.goHome();
             }
         });
         subFeedButton.setOnClickListener(new View.OnClickListener()
@@ -146,6 +155,13 @@ public class MainActivity extends AppCompatActivity {
                 popup.show();
             }
         });
+    }
+
+    public void goHome() {
+        Intent homeIntent = new Intent (this, MainActivity.class);
+        homeIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+        startActivity(homeIntent);
+
     }
 
     public void openCreateFolder() {
