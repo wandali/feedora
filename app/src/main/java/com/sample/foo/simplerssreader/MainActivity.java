@@ -1,14 +1,17 @@
 package com.sample.foo.simplerssreader;
 
 import android.app.AlertDialog;
-import android.content.Intent;
+import android.content.ContentValues;
 import android.content.DialogInterface;
+import android.content.Intent;
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
 import android.os.AsyncTask;
+import android.os.Bundle;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
-import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.PopupMenu;
 import android.support.v7.widget.RecyclerView;
@@ -26,13 +29,9 @@ import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
-import java.io.File;
-import android.os.Environment;
 
-
-
-import java.util.ArrayList;
-
+import com.sample.foo.simplerssreader.database.DBHelper;
+import com.sample.foo.simplerssreader.database.FolderContract.FolderEntry;
 
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
@@ -41,42 +40,31 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 import java.net.URLConnection;
+import java.text.DateFormat;
 import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
 import java.util.Collections;
 import java.util.Date;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
+import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
 
     private static final String TAG = "MainActivity";
 
-    private static String[] subList = new String[15];
-    private static int subTracker=0;
-
-    private DrawerLayout mDrawerLayout;
     private ActionBarDrawerToggle mToggle;
 
     private RecyclerView mRecyclerView;
     private EditText mEditText;
-    private Button mFetchFeedButton;
-    private Button subFeedButton;
-    private View mHomeButton;
+    private Button mSubscribeButton;
     private SwipeRefreshLayout mSwipeLayout;
     private TextView mFeedTitleTextView;
     private TextView mFeedDescriptionTextView;
-    private View mPlusIconView;
 
     private List<RssFeedModel> mFeedModelList;
     private String mFeedTitle;
     private String mFeedDescription;
-    private String folderName;
-    private LinearLayout mLinearLayout;
-    private File folder;
-    private LinearLayout view;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -84,7 +72,7 @@ public class MainActivity extends AppCompatActivity {
         final MainActivity self = this;
         setContentView(R.layout.activity_main);
 
-        mDrawerLayout = (DrawerLayout) findViewById(R.id.drawerLayout);
+        DrawerLayout mDrawerLayout = (DrawerLayout) findViewById(R.id.drawerLayout);
         mToggle = new ActionBarDrawerToggle(this, mDrawerLayout, R.string.open, R.string.close);
 
         mDrawerLayout.addDrawerListener(mToggle);
@@ -92,84 +80,92 @@ public class MainActivity extends AppCompatActivity {
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         mRecyclerView = (RecyclerView) findViewById(R.id.recyclerView);
         mEditText = (EditText) findViewById(R.id.rssFeedEditText);
-        mFetchFeedButton = (Button) findViewById(R.id.fetchFeedButton);
-        subFeedButton = (Button) findViewById(R.id.subFeedButton);
+        Button mFetchButton = (Button) findViewById(R.id.fetchFeedButton);
+        mSubscribeButton = (Button) findViewById(R.id.subFeedButton);
         mSwipeLayout = (SwipeRefreshLayout) findViewById(R.id.swipeRefreshLayout);
         mFeedTitleTextView = (TextView) findViewById(R.id.feedTitle);
         mFeedDescriptionTextView = (TextView) findViewById(R.id.feedDescription);
-        mPlusIconView = findViewById(R.id.menu).findViewById(R.id.plus);
-        mHomeButton = findViewById(R.id.menu).findViewById(R.id.homeButton);
-
-
-
-
+        View mAddFolderButton = findViewById(R.id.menu).findViewById(R.id.plus);
+        View mHomeButton = findViewById(R.id.menu).findViewById(R.id.homeButton);
 
         mHomeButton.setOnClickListener(new View.OnClickListener() {
-         /* Date: 13/03/2017
-            used to set an action listenter to the home button to direct the user to the home screen
-          */
+           /* Date: 13/03/2017
+           used to set an action listener to the home button to direct the user to the home screen. */
            @Override
            public void onClick(View view) {
+               Log.v(TAG, "Clicked Home.");
                self.goHome();
-
-
            }
-
        });
 
-        mPlusIconView.setOnClickListener(new View.OnClickListener() {
+        mAddFolderButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                self.openCreateFolder();
+                Log.v(TAG, "Clicked Create Folder.");
+                self.openCreateFolderDialog();
             }
         });
 
         mRecyclerView.setLayoutManager(new LinearLayoutManager(this));
 
-        mFetchFeedButton.setOnClickListener(new View.OnClickListener() {
+        mFetchButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                Log.v(TAG, "Clicked Fetch.");
                 new FetchFeedTask().execute((Void) null);
             }
         });
+
         mSwipeLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
             @Override
             public void onRefresh() {
+                Log.v(TAG, "Pulled to refresh.");
                 new FetchFeedTask().execute((Void) null);
             }
         });
-        subFeedButton.setOnClickListener(new View.OnClickListener()
-        {
+
+        mSubscribeButton.setOnClickListener(new View.OnClickListener() {
             /* Date: 16/02/2017
-            Francis: IMPORTANT NOTE: READ THIS FOR ADDING NEW MENU ITEMS PROGRAMATICALLY
+            Francis: IMPORTANT NOTE: READ THIS FOR ADDING NEW MENU ITEMS PROGRAMMATICALLY
             popup.getMenu().add(groupId, itemId, order, title); for each menuItem you want to add.
             This comment is left in for the other group members. Depending on if I wind up
             not working on adding new items to the drop down menu. */
             @Override
-            public void onClick(View view)
-            {
+            public void onClick(View view) {
+                Log.v(TAG, "Clicked Subscribe.");
 
-                Log.v("The link you have is:", mEditText.getText().toString());
-
-                PopupMenu popup = new PopupMenu(MainActivity.this,subFeedButton);
+                PopupMenu popup = new PopupMenu(MainActivity.this, mSubscribeButton);
                 /* Date: 16/02/2017
                 Francis: Inflating the Popup through the xml file */
                 popup.getMenuInflater().inflate(R.menu.subscribe_menu, popup.getMenu());
 
+                // Get the folders from the db.
+                DBHelper mDbHelper = new DBHelper(getApplicationContext());
+                SQLiteDatabase db = mDbHelper.getReadableDatabase();
+                String[] projection = {
+                        FolderEntry._ID,
+                        FolderEntry.TITLE,
+                };
+                String sortOrder = FolderEntry.TITLE + " DESC";
+                Cursor cursor = db.query(
+                        FolderEntry.TABLE_NAME,
+                        projection,
+                        null,
+                        null,
+                        null,
+                        null,
+                        sortOrder
+                );
 
-                File folder = new File(Environment.getExternalStorageDirectory().getAbsolutePath());
-
-                for(int i=0;i<folder.listFiles().length;++i)
-                {
-
-                    subTracker = i;
-                    String name=folder.getName();
-
-                    popup.getMenu().add(Menu.NONE,subTracker,Menu.NONE,folder.toString());
-
+                int subTracker = 0;
+                // Push folders onto the menu.
+                while(cursor.moveToNext()) {
+                    int folderNameIndex = cursor.getColumnIndexOrThrow(FolderEntry.TITLE);
+                    String folderName = cursor.getString(folderNameIndex);
+                    popup.getMenu().add(Menu.NONE, subTracker, Menu.NONE, folderName);
+                    subTracker++;
                 }
-
-
+                cursor.close();
 
                 /* Date: 16/02/2017
                 Francis: Registering popup with OnMenuItemClickListener. So you can click on the
@@ -181,7 +177,7 @@ public class MainActivity extends AppCompatActivity {
                         int id = item.getItemId();
                         if (id == R.id.Add)
                         {
-                            self.openCreateFolder();
+                            self.openCreateFolderDialog();
                             return true;
                         }
                         return true;
@@ -191,11 +187,46 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-
-
+        self.refreshFolders();
     }
 
-    /*this is the function that will direct users to the homescreen*/
+    public void refreshFolders() {
+        LinearLayout linearLayout = (LinearLayout)findViewById(R.id.subFeedList);
+        // Clear the folder rows.
+        linearLayout.removeAllViews();
+
+        DBHelper mDbHelper = new DBHelper(getApplicationContext());
+        SQLiteDatabase db = mDbHelper.getReadableDatabase();
+        String[] projection = {
+                FolderEntry._ID,
+                FolderEntry.TITLE,
+        };
+        String sortOrder = FolderEntry.TITLE + " DESC";
+        Cursor cursor = db.query(
+                FolderEntry.TABLE_NAME,
+                projection,
+                null,
+                null,
+                null,
+                null,
+                sortOrder
+        );
+
+        int subTracker = 0;
+        // Push folders onto the menu.
+        while(cursor.moveToNext()) {
+            int folderNameIndex = cursor.getColumnIndexOrThrow(FolderEntry.TITLE);
+            String folderName = cursor.getString(folderNameIndex);
+            View folderRowView = LayoutInflater
+                    .from(this)
+                    .inflate(R.layout.folder_row, linearLayout, false);
+            TextView text = (TextView) folderRowView.findViewById(R.id.textView);
+            text.setText(folderName);
+            linearLayout.addView(folderRowView);
+        }
+        cursor.close();
+    }
+
     public void goHome() {
         Intent homeIntent;
         homeIntent = new Intent(this, MainActivity.class);
@@ -203,68 +234,40 @@ public class MainActivity extends AppCompatActivity {
         startActivity(homeIntent);
     }
 
-    public void openCreateFolder() {
+    public void openCreateFolderDialog() {
         View viewInflated = LayoutInflater
                 .from(this)
                 .inflate(R.layout.dialog_text_input, (ViewGroup) findViewById(android.R.id.content), false);
         final EditText input = (EditText) viewInflated.findViewById(R.id.input);
 
+        final MainActivity self = this;
         new AlertDialog.Builder(this)
                 .setTitle("Create a Folder")
                 .setView(viewInflated)
                 .setPositiveButton("Create", new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int whichButton) {
                         /* Date: 10/03/2017
-                    Francis: Adds the user input to the list of folders. To be established
+                        Francis: Adds the user input to the list of folders. To be established
                         later. */
-                        folderName = input.getText().toString().trim();
-
-                        //String fileName = fullPath.substring ( fullPath.indexOf ( "/" ) + 1 );
-
-                        //String extStore = Environment.getExternalStorageDirectory()+ "/";
-                        File folder = new File(Environment.getExternalStorageDirectory()+folderName);
-                        //File folder = new File(Environment.getExternalStorageDirectory().getA + "app/"+ folderName);
-
-
-                        if (!folder.exists())
-                        //if((!Arrays.asList(subList).contains(folderName)) && (folder.exists() == false))
-                        {
-                            if(folder.mkdirs()==true) {
-
-                            }
-                            else if (folder.mkdirs()==false)
-                            {
-                                Log.d("STATE", Environment.getExternalStorageState());
-                                Log.d("PATH", folder.getAbsolutePath());
-                                Log.d("MAKE DIR", folder.mkdirs() + "");
-                            }
-                            //currently the 'folders' (strings) are being displayed through this list
-                            subList[subTracker]=folderName;
-                            ++subTracker;
-                            Toast.makeText(MainActivity.this, "Created new folder", Toast.LENGTH_LONG).show();
-
-                            mLinearLayout = (LinearLayout)findViewById(R.id.subFeedList);
-                            TextView customSub = new TextView(MainActivity.this);
-                            customSub.setText(folder.toString());
-                            customSub.setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
-                            mLinearLayout.addView(customSub);
-
-                        }
-                        //don't want multiple folders with same name
-                        else
-                        {
-                            Toast.makeText(MainActivity.this, "Folder already exists", Toast.LENGTH_LONG).show();
+                        String folderName = input.getText().toString().trim();
+                        if (folderName.length() == 0) {
+                            Toast.makeText(MainActivity.this, "Enter a folder name.", Toast.LENGTH_LONG).show();
+                            return;
                         }
 
-
-
+                        // Add a folder to the db.
+                        DBHelper mDbHelper = new DBHelper(getApplicationContext());
+                        SQLiteDatabase db = mDbHelper.getWritableDatabase();
+                        ContentValues folderValues = new ContentValues();
+                        folderValues.put(FolderEntry.TITLE, folderName);
+                        db.insert(FolderEntry.TABLE_NAME, null, folderValues);
+                        self.refreshFolders();
                     }
                 })
                 .setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int whichButton) {
                     }
-                })
-                .show();
+                }).show();
     }
 
 
@@ -276,6 +279,7 @@ public class MainActivity extends AppCompatActivity {
         getMenuInflater().inflate(R.menu.menu_main, menu);
         return true;
     }
+
     @Override
     public boolean onOptionsItemSelected(MenuItem item){
         /* Date: 16/02/2017
@@ -331,6 +335,7 @@ public class MainActivity extends AppCompatActivity {
         }
         return super.onOptionsItemSelected(item);
     }
+
     public List<RssFeedModel> parseFeed(InputStream inputStream) throws XmlPullParserException, IOException {
         String title = null;
         String link = null;
@@ -426,7 +431,7 @@ public class MainActivity extends AppCompatActivity {
                         title = "";
                     }
                     else{
-                        Log.d("MainActivity", "ERROR: PARSING FEED TITLE");
+                        Log.e(TAG, "ERROR: PARSING FEED TITLE");
                     }
                     mFeedTitle = title;
                     mFeedDescription = description;
