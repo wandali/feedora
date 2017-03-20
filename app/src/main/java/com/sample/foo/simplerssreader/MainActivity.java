@@ -1,13 +1,20 @@
 package com.sample.foo.simplerssreader;
 
 import android.app.AlertDialog;
+import android.content.ContentValues;
+import android.content.Context;
 import android.content.DialogInterface;
+import android.content.Intent;
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
+import android.database.sqlite.SQLiteQueryBuilder;
 import android.os.AsyncTask;
+import android.os.Bundle;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v4.widget.SwipeRefreshLayout;
+import android.support.v7.app.ActionBar;
 import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
-import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.PopupMenu;
 import android.support.v7.widget.RecyclerView;
@@ -28,7 +35,12 @@ import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
-import android.content.Intent;
+
+import com.sample.foo.simplerssreader.database.DBHelper;
+import com.sample.foo.simplerssreader.database.FeedContract.FeedEntry;
+import com.sample.foo.simplerssreader.database.FolderContract.FolderEntry;
+import com.unnamed.b.atv.model.TreeNode;
+import com.unnamed.b.atv.view.AndroidTreeView;
 
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
@@ -37,42 +49,31 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 import java.net.URLConnection;
+import java.text.DateFormat;
 import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
 import java.util.Collections;
 import java.util.Date;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
+import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
 
     private static final String TAG = "MainActivity";
 
-    private static String[] subList = new String[15];
-    private static int subTracker=0;
-
-    private DrawerLayout mDrawerLayout;
     private ActionBarDrawerToggle mToggle;
     private RecyclerView mRecyclerView;
-    private Button mFetchFeedButton;
-    private Button subFeedButton;
-    private SwipeRefreshLayout mSwipeLayout;
-    private TextView mFeedTitleTextView;
-    private TextView mFeedDescriptionTextView;
-    private View mPlusIconView;
-    private View mHomeButton;
-
     private AutoCompleteTextView mEditText;
     private ArrayAdapter<String> mAdapter;
     private List<String> mHistoryList;
-
+    private Button mSubscribeButton;
+    private SwipeRefreshLayout mSwipeLayout;
+    private TextView mFeedTitleTextView;
+    private TextView mFeedDescriptionTextView;
     private List<RssFeedModel> mFeedModelList;
     private String mFeedTitle;
     private String mFeedDescription;
-
-    private LinearLayout mLinearLayout;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -80,27 +81,28 @@ public class MainActivity extends AppCompatActivity {
         final MainActivity self = this;
         setContentView(R.layout.activity_main);
 
-        mDrawerLayout = (DrawerLayout) findViewById(R.id.drawerLayout);
+        DrawerLayout mDrawerLayout = (DrawerLayout) findViewById(R.id.drawerLayout);
         mToggle = new ActionBarDrawerToggle(this, mDrawerLayout, R.string.open, R.string.close);
 
         mDrawerLayout.addDrawerListener(mToggle);
         mToggle.syncState();
-        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        ActionBar actionBar = getSupportActionBar();
+        if (actionBar != null) {
+            actionBar.setDisplayHomeAsUpEnabled(true);
+        }
         mRecyclerView = (RecyclerView) findViewById(R.id.recyclerView);
-        mFetchFeedButton = (Button) findViewById(R.id.fetchFeedButton);
-        subFeedButton = (Button) findViewById(R.id.subFeedButton);
         mSwipeLayout = (SwipeRefreshLayout) findViewById(R.id.swipeRefreshLayout);
         mFeedTitleTextView = (TextView) findViewById(R.id.feedTitle);
         mFeedDescriptionTextView = (TextView) findViewById(R.id.feedDescription);
-        mPlusIconView = findViewById(R.id.menu).findViewById(R.id.plus);
-        mHomeButton = findViewById(R.id.menu).findViewById(R.id.homeButton);
+        View mHomeButton = findViewById(R.id.menu).findViewById(R.id.homeButton);
 
-        /*Date: 16/03/2017
-        * Joline: This is for the history set up, used AutoCompleteTextView. mEditText, used to be
-        * of type "Edit Text" kept name and tag id in case used elsewhere in program*/
+        /* Date: 16/03/2017
+        Incoming #3026
+        Joline: This is for the history set up, used AutoCompleteTextView. mEditText, used to be
+        of type "Edit Text" kept name and tag id in case used elsewhere in program*/
         mEditText = (AutoCompleteTextView) findViewById(R.id.rssFeedEditText);
         mHistoryList = new ArrayList<>();
-        mAdapter = new ArrayAdapter<>(this, android.R.layout.simple_dropdown_item_1line,mHistoryList);
+        mAdapter = new ArrayAdapter<>(this, android.R.layout.simple_dropdown_item_1line, mHistoryList);
         mEditText.setThreshold(0);
         mEditText.enoughToFilter();
         mEditText.setAdapter(mAdapter);
@@ -112,51 +114,95 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        mPlusIconView.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                self.openCreateFolder();
-            }
-        });
+        Button mFetchButton = (Button) findViewById(R.id.fetchFeedButton);
+        mSubscribeButton = (Button) findViewById(R.id.subFeedButton);
+        mSwipeLayout = (SwipeRefreshLayout) findViewById(R.id.swipeRefreshLayout);
+        mFeedTitleTextView = (TextView) findViewById(R.id.feedTitle);
+        mFeedDescriptionTextView = (TextView) findViewById(R.id.feedDescription);
+
+        mHomeButton.setOnClickListener(new View.OnClickListener() {
+           /* Date: 13/03/2017
+           Incoming #3013
+           Used to set an action listener to the home button to direct the user to the home screen. */
+           @Override
+           public void onClick(View view) {
+               Log.v(TAG, "Clicked Home.");
+               self.goHome();
+           }
+       });
 
         mRecyclerView.setLayoutManager(new LinearLayoutManager(this));
 
-        mFetchFeedButton.setOnClickListener(new View.OnClickListener() {
+        mFetchButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                Log.v(TAG, "Clicked Fetch.");
                 new FetchFeedTask().execute((Void) null);
             }
         });
+
         mSwipeLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
             @Override
             public void onRefresh() {
+                Log.v(TAG, "Pulled to refresh.");
                 new FetchFeedTask().execute((Void) null);
             }
         });
+
         mHomeButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 self.goHome();
             }
         });
-        subFeedButton.setOnClickListener(new View.OnClickListener()
-        {
+
+        mSubscribeButton.setOnClickListener(new View.OnClickListener() {
             /* Date: 16/02/2017
-            Francis: IMPORTANT NOTE: READ THIS FOR ADDING NEW MENU ITEMS PROGRAMATICALLY
+            Francis: IMPORTANT NOTE: READ THIS FOR ADDING NEW MENU ITEMS PROGRAMMATICALLY
             popup.getMenu().add(groupId, itemId, order, title); for each menuItem you want to add.
             This comment is left in for the other group members. Depending on if I wind up
             not working on adding new items to the drop down menu. */
             @Override
-            public void onClick(View view)
-            {
-                PopupMenu popup = new PopupMenu(MainActivity.this,subFeedButton);
+            public void onClick(View view) {
+                Log.v(TAG, "Clicked Subscribe.");
+
+                PopupMenu popup = new PopupMenu(MainActivity.this, mSubscribeButton);
                 /* Date: 16/02/2017
                 Francis: Inflating the Popup through the xml file */
                 popup.getMenuInflater().inflate(R.menu.subscribe_menu, popup.getMenu());
-                for(int i=0;i<subTracker;++i)
-                {
-                    popup.getMenu().add(Menu.NONE,subTracker,Menu.NONE,subList[i]);
+
+                /* Date: 19/04/2017
+                Incoming #3010
+                Wanda: Get the folders from the db. */
+                DBHelper mDbHelper = new DBHelper(getApplicationContext());
+                SQLiteDatabase db = mDbHelper.getReadableDatabase();
+                String[] projection = {
+                        FolderEntry._ID,
+                        FolderEntry.TITLE,
+                };
+                String sortOrder = FolderEntry.TITLE + " ASC";
+                Cursor cursor = db.query(
+                        FolderEntry.TABLE_NAME,
+                        projection,
+                        null,
+                        null,
+                        null,
+                        null,
+                        sortOrder
+                );
+
+                /* Date: 19/04/2017
+                Incoming #3010
+                Wanda: Push folder items onto the subscribe popup menu. */
+                int folderNameIndex = cursor.getColumnIndexOrThrow(FolderEntry.TITLE);
+                int folderIDIndex = cursor.getColumnIndexOrThrow(FolderEntry._ID);
+                while(cursor.moveToNext()) {
+                    String folderName = cursor.getString(folderNameIndex);
+                    int folderID = cursor.getInt(folderIDIndex);
+                    popup.getMenu().add(Menu.NONE, folderID, Menu.NONE, folderName);
                 }
+                cursor.close();
+
                 /* Date: 16/02/2017
                 Francis: Registering popup with OnMenuItemClickListener. So you can click on the
                 options */
@@ -165,10 +211,21 @@ public class MainActivity extends AppCompatActivity {
                     public boolean onMenuItemClick(MenuItem item)
                     {
                         int id = item.getItemId();
-                        if (id == R.id.Add)
-                        {
-                            self.openCreateFolder();
+                        if (id == R.id.Add) {
+                            self.openCreateFolderDialog();
                             return true;
+                        } else {
+                             /* Date: 19/04/2017
+                             Incoming #3010
+                             Wanda: Add a folder to the db. */
+                            final String subscribeUrl = mEditText.getText().toString();
+                            DBHelper mDbHelper = new DBHelper(getApplicationContext());
+                            SQLiteDatabase db = mDbHelper.getWritableDatabase();
+                            ContentValues feedValues = new ContentValues();
+                            feedValues.put(FeedEntry.URL, subscribeUrl);
+                            feedValues.put(FeedEntry.FOLDER_ID, id);
+                            db.insert(FeedEntry.TABLE_NAME, null, feedValues);
+                            self.refreshFolders();
                         }
                         return true;
                     }
@@ -176,6 +233,71 @@ public class MainActivity extends AppCompatActivity {
                 popup.show();
             }
         });
+
+        self.refreshFolders();
+    }
+
+    public void refreshFolders() {
+        LinearLayout foldersContainer = (LinearLayout) findViewById(R.id.foldersContainer);
+
+         /* Date: 19/04/2017
+         Incoming #3010
+         Wanda: Clear the container. */
+        foldersContainer.removeAllViews();
+
+        DBHelper mDbHelper = new DBHelper(getApplicationContext());
+        SQLiteDatabase db = mDbHelper.getReadableDatabase();
+        SQLiteQueryBuilder queryBuilder = new SQLiteQueryBuilder();
+        queryBuilder.setTables(
+                FeedEntry.TABLE_NAME +
+                " feeds LEFT OUTER JOIN " +
+                FolderEntry.TABLE_NAME +
+                " folders ON " +
+                "feeds." + FeedEntry.FOLDER_ID + " = folders." + FolderEntry._ID
+        );
+        String sortOrder = FolderEntry.TITLE + " ASC";
+        Cursor cursor = queryBuilder.query(db, null, null, null, null, null, sortOrder);
+
+         /* Date: 19/04/2017
+         Incoming #3010
+         Wanda: Push folders onto the tree. */
+        int folderNameIndex = cursor.getColumnIndex(FolderEntry.TITLE);
+        int folderIDIndex = cursor.getColumnIndex(FolderEntry._ID);
+        int feedUrlIndex = cursor.getColumnIndex(FeedEntry.URL);
+        int prevFolderId = -1;
+        TreeNode root = TreeNode.root();
+        Context context = this;
+        TreeNode folderNode = null;
+        while(cursor.moveToNext()) {
+            String folderName = cursor.getString(folderNameIndex);
+            String feedUrl = cursor.getString(feedUrlIndex);
+            int folderID = cursor.getInt(folderIDIndex);
+
+            /* Date: 19/04/2017
+            Incoming #3010
+            Wanda: Push a new folder if it's a new folderID. */
+            if (folderID != prevFolderId) {
+                folderNode = new TreeNode(new FolderTreeItemHolder.IconTreeItem(folderName))
+                        .setViewHolder(new FolderTreeItemHolder(context));
+                root.addChild(folderNode);
+                prevFolderId = folderID;
+            }
+            /* Date: 19/04/2017
+            Incoming #3023
+            Wanda: Push the feed onto the folder. */
+            if (feedUrl != null) {
+                TreeNode feedNode = new TreeNode(new FeedTreeItemHolder.IconTreeItem(feedUrl))
+                        .setViewHolder(new FeedTreeItemHolder(this));
+                assert folderNode != null;
+                folderNode.addChildren(feedNode);
+            }
+        }
+        cursor.close();
+
+        AndroidTreeView treeView = new AndroidTreeView(this, root);
+        treeView.setDefaultAnimation(true);
+        treeView.setDefaultContainerStyle(R.style.TreeNodeStyleDivided, true);
+        foldersContainer.addView(treeView.getView());
     }
 
     public void goHome() {
@@ -185,37 +307,63 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
-    public void openCreateFolder() {
+    public void openCreateFolderDialog() {
         View viewInflated = LayoutInflater
                 .from(this)
                 .inflate(R.layout.dialog_text_input, (ViewGroup) findViewById(android.R.id.content), false);
         final EditText input = (EditText) viewInflated.findViewById(R.id.input);
 
+        final MainActivity self = this;
         new AlertDialog.Builder(this)
                 .setTitle("Create a Folder")
                 .setView(viewInflated)
                 .setPositiveButton("Create", new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int whichButton) {
+
                         /* Date: 10/03/2017
                         Francis: Adds the user input to the list of folders. To be established
                         later. */
-                        String folderName = input.getText().toString();
+                        String folderName = input.getText().toString().trim();
+                        if (folderName.length() == 0) {
+                            Toast.makeText(MainActivity.this, "Enter a folder name.", Toast.LENGTH_LONG).show();
+                            return;
+                        }
 
-                        subList[subTracker]=folderName;
-                        ++subTracker;
+                        String feedUrl = mEditText.getText().toString().toLowerCase();
+                        if (feedUrl.length() == 0) {
+                            Toast.makeText(MainActivity.this, "Your feed url cannot be blank.", Toast.LENGTH_LONG).show();
+                            return;
+                        }
 
-                        mLinearLayout = (LinearLayout)findViewById(R.id.subFeedList);
-                        TextView customSub = new TextView(MainActivity.this);
-                        customSub.setText(folderName);
-                        customSub.setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
-                        mLinearLayout.addView(customSub);
+                        /* Date: 19/04/2017
+                        Wanda: Get a writeable database. */
+                        DBHelper mDbHelper = new DBHelper(getApplicationContext());
+                        SQLiteDatabase db = mDbHelper.getWritableDatabase();
+
+                        /* Date: 19/04/2017
+                        Incoming #3010
+                        Wanda: Add folder to the db. */
+                        ContentValues folderValues = new ContentValues();
+                        folderValues.put(FolderEntry.TITLE, folderName);
+                        long folderID = db.insert(FolderEntry.TABLE_NAME, null, folderValues);
+
+                        /* Date: 19/04/2017
+                        Incoming #3023
+                        Wanda: Add feed to the db. */
+                        ContentValues feedValues = new ContentValues();
+                        feedValues.put(FeedEntry.URL, feedUrl);
+                        feedValues.put(FeedEntry.FOLDER_ID, folderID);
+                        db.insert(FeedEntry.TABLE_NAME, null, feedValues);
+
+                        /* Date: 19/04/2017
+                        Wanda: Refresh UI. */
+                        self.refreshFolders();
                     }
                 })
                 .setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int whichButton) {
                     }
-                })
-                .show();
+                }).show();
     }
 
 
@@ -227,6 +375,7 @@ public class MainActivity extends AppCompatActivity {
         getMenuInflater().inflate(R.menu.menu_main, menu);
         return true;
     }
+
     @Override
     public boolean onOptionsItemSelected(MenuItem item){
         /* Date: 16/02/2017
@@ -235,7 +384,7 @@ public class MainActivity extends AppCompatActivity {
 
 
         /* Date: 16/02/2017
-        For no functionality, the below if statement is sufficient. */
+        Francis: For no functionality, the below if statement is sufficient. */
         if(mToggle.onOptionsItemSelected(item)){
             return(true);
         }
@@ -282,6 +431,7 @@ public class MainActivity extends AppCompatActivity {
         }
         return super.onOptionsItemSelected(item);
     }
+
     public List<RssFeedModel> parseFeed(InputStream inputStream) throws XmlPullParserException, IOException {
         String title = null;
         String link = null;
@@ -377,7 +527,7 @@ public class MainActivity extends AppCompatActivity {
                         title = "";
                     }
                     else{
-                        Log.d("MainActivity", "ERROR: PARSING FEED TITLE");
+                        Log.e(TAG, "ERROR: PARSING FEED TITLE");
                     }
                     mFeedTitle = title;
                     mFeedDescription = description;
@@ -480,9 +630,10 @@ public class MainActivity extends AppCompatActivity {
         }
 
         /*Date: 16/03/2017
-        * Joline: This function updates the adapter and history list by adding the
-        * most recent accepted url submitted by the user. Shows the most recent url first*/
-        public void updateHistory(String feedURL){
+        Incoming #3026
+        Joline: This function updates the adapter and history list by adding the
+        most recent accepted url submitted by the user. Shows the most recent url first*/
+        void updateHistory(String feedURL){
             if(!mHistoryList.contains(feedURL)){
                 if(mHistoryList.size() == 5){
                     mHistoryList.remove(4);
