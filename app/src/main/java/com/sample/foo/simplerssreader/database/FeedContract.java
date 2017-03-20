@@ -7,6 +7,7 @@ public final class FeedContract {
 
     public static class FeedEntry implements BaseColumns {
         public static final String TABLE_NAME = "feeds";
-        public static final String TITLE = "title";
+        public static final String URL = "url";
+        public static final String FOLDER_ID = "folder_id";
     }
 }

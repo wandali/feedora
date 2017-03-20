@@ -3,7 +3,8 @@
     <color name="colorPrimary">#ffffff</color>
     <color name="colorPrimaryDark">#000000</color>
     <color name="colorAccent">#ff4081</color>
+    <color name="colorGroupBackground">#eeeeee</color>
+    <color name="colorGroupDivider">#cccccc</color>
     <color name="colorTitle">#000000</color>
-
     <color name="black_overlay">#66000000</color>
 </resources>

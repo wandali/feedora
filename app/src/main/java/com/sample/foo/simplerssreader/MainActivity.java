@@ -2,10 +2,12 @@ package com.sample.foo.simplerssreader;
 
 import android.app.AlertDialog;
 import android.content.ContentValues;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.database.sqlite.SQLiteQueryBuilder;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v4.widget.DrawerLayout;
@@ -31,7 +33,10 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.sample.foo.simplerssreader.database.DBHelper;
+import com.sample.foo.simplerssreader.database.FeedContract.FeedEntry;
 import com.sample.foo.simplerssreader.database.FolderContract.FolderEntry;
+import com.unnamed.b.atv.model.TreeNode;
+import com.unnamed.b.atv.view.AndroidTreeView;
 
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
@@ -85,8 +90,7 @@ public class MainActivity extends AppCompatActivity {
         mSwipeLayout = (SwipeRefreshLayout) findViewById(R.id.swipeRefreshLayout);
         mFeedTitleTextView = (TextView) findViewById(R.id.feedTitle);
         mFeedDescriptionTextView = (TextView) findViewById(R.id.feedDescription);
-        View mAddFolderButton = findViewById(R.id.menu).findViewById(R.id.plus);
-        View mHomeButton = findViewById(R.id.menu).findViewById(R.id.homeButton);
+        View mHomeButton = findViewById(R.id.menu).findViewById(R.id.home_button);
 
         mHomeButton.setOnClickListener(new View.OnClickListener() {
            /* Date: 13/03/2017
@@ -97,14 +101,6 @@ public class MainActivity extends AppCompatActivity {
                self.goHome();
            }
        });
-
-        mAddFolderButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Log.v(TAG, "Clicked Create Folder.");
-                self.openCreateFolderDialog();
-            }
-        });
 
         mRecyclerView.setLayoutManager(new LinearLayoutManager(this));
 
@@ -139,14 +135,16 @@ public class MainActivity extends AppCompatActivity {
                 Francis: Inflating the Popup through the xml file */
                 popup.getMenuInflater().inflate(R.menu.subscribe_menu, popup.getMenu());
 
-                // Get the folders from the db.
+                /* Date: 19/04/2017
+                Incoming #3010
+                Wanda: Get the folders from the db. */
                 DBHelper mDbHelper = new DBHelper(getApplicationContext());
                 SQLiteDatabase db = mDbHelper.getReadableDatabase();
                 String[] projection = {
                         FolderEntry._ID,
                         FolderEntry.TITLE,
                 };
-                String sortOrder = FolderEntry.TITLE + " DESC";
+                String sortOrder = FolderEntry.TITLE + " ASC";
                 Cursor cursor = db.query(
                         FolderEntry.TABLE_NAME,
                         projection,
@@ -157,13 +155,15 @@ public class MainActivity extends AppCompatActivity {
                         sortOrder
                 );
 
-                int subTracker = 0;
-                // Push folders onto the menu.
+                /* Date: 19/04/2017
+                Incoming #3010
+                Wanda: Push folder items onto the subscribe popup menu. */
+                int folderNameIndex = cursor.getColumnIndexOrThrow(FolderEntry.TITLE);
+                int folderIDIndex = cursor.getColumnIndexOrThrow(FolderEntry._ID);
                 while(cursor.moveToNext()) {
-                    int folderNameIndex = cursor.getColumnIndexOrThrow(FolderEntry.TITLE);
                     String folderName = cursor.getString(folderNameIndex);
-                    popup.getMenu().add(Menu.NONE, subTracker, Menu.NONE, folderName);
-                    subTracker++;
+                    int folderID = cursor.getInt(folderIDIndex);
+                    popup.getMenu().add(Menu.NONE, folderID, Menu.NONE, folderName);
                 }
                 cursor.close();
 
@@ -175,10 +175,21 @@ public class MainActivity extends AppCompatActivity {
                     public boolean onMenuItemClick(MenuItem item)
                     {
                         int id = item.getItemId();
-                        if (id == R.id.Add)
-                        {
+                        if (id == R.id.Add) {
                             self.openCreateFolderDialog();
                             return true;
+                        } else {
+                             /* Date: 19/04/2017
+                             Incoming #3010
+                             Wanda: Add a folder to the db. */
+                            final String subscribeUrl = mEditText.getText().toString();
+                            DBHelper mDbHelper = new DBHelper(getApplicationContext());
+                            SQLiteDatabase db = mDbHelper.getWritableDatabase();
+                            ContentValues feedValues = new ContentValues();
+                            feedValues.put(FeedEntry.URL, subscribeUrl);
+                            feedValues.put(FeedEntry.FOLDER_ID, id);
+                            db.insert(FeedEntry.TABLE_NAME, null, feedValues);
+                            self.refreshFolders();
                         }
                         return true;
                     }
@@ -191,40 +202,66 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void refreshFolders() {
-        LinearLayout linearLayout = (LinearLayout)findViewById(R.id.subFeedList);
-        // Clear the folder rows.
-        linearLayout.removeAllViews();
+        LinearLayout foldersContainer = (LinearLayout) findViewById(R.id.folders_container);
+
+         /* Date: 19/04/2017
+         Incoming #3010
+         Wanda: Clear the container. */
+        foldersContainer.removeAllViews();
 
         DBHelper mDbHelper = new DBHelper(getApplicationContext());
         SQLiteDatabase db = mDbHelper.getReadableDatabase();
-        String[] projection = {
-                FolderEntry._ID,
-                FolderEntry.TITLE,
-        };
-        String sortOrder = FolderEntry.TITLE + " DESC";
-        Cursor cursor = db.query(
-                FolderEntry.TABLE_NAME,
-                projection,
-                null,
-                null,
-                null,
-                null,
-                sortOrder
+        SQLiteQueryBuilder queryBuilder = new SQLiteQueryBuilder();
+        queryBuilder.setTables(
+                FeedEntry.TABLE_NAME +
+                " feeds LEFT OUTER JOIN " +
+                FolderEntry.TABLE_NAME +
+                " folders ON " +
+                "feeds." + FeedEntry.FOLDER_ID + " = folders." + FolderEntry._ID
         );
+        String sortOrder = FolderEntry.TITLE + " ASC";
+        Cursor cursor = queryBuilder.query(db, null, null, null, null, null, sortOrder);
 
-        int subTracker = 0;
-        // Push folders onto the menu.
+         /* Date: 19/04/2017
+         Incoming #3010
+         Wanda: Push folders onto the tree. */
+        int folderNameIndex = cursor.getColumnIndex(FolderEntry.TITLE);
+        int folderIDIndex = cursor.getColumnIndex(FolderEntry._ID);
+        int feedUrlIndex = cursor.getColumnIndex(FeedEntry.URL);
+        int prevFolderId = -1;
+        TreeNode root = TreeNode.root();
+        Context context = this;
+        TreeNode folderNode = null;
         while(cursor.moveToNext()) {
-            int folderNameIndex = cursor.getColumnIndexOrThrow(FolderEntry.TITLE);
             String folderName = cursor.getString(folderNameIndex);
-            View folderRowView = LayoutInflater
-                    .from(this)
-                    .inflate(R.layout.folder_row, linearLayout, false);
-            TextView text = (TextView) folderRowView.findViewById(R.id.textView);
-            text.setText(folderName);
-            linearLayout.addView(folderRowView);
+            String feedUrl = cursor.getString(feedUrlIndex);
+            int folderID = cursor.getInt(folderIDIndex);
+
+            /* Date: 19/04/2017
+            Incoming #3010
+            Wanda: Push a new folder if it's a new folderID. */
+            if (folderID != prevFolderId) {
+                folderNode = new TreeNode(new FolderTreeItemHolder.IconTreeItem(folderName))
+                        .setViewHolder(new FolderTreeItemHolder(context));
+                root.addChild(folderNode);
+                prevFolderId = folderID;
+            }
+            /* Date: 19/04/2017
+            Incoming #3023
+            Wanda: Push the feed onto the folder. */
+            if (feedUrl != null) {
+                TreeNode feedNode = new TreeNode(new FeedTreeItemHolder.IconTreeItem(feedUrl))
+                        .setViewHolder(new FeedTreeItemHolder(this));
+                assert folderNode != null;
+                folderNode.addChildren(feedNode);
+            }
         }
         cursor.close();
+
+        AndroidTreeView treeView = new AndroidTreeView(this, root);
+        treeView.setDefaultAnimation(true);
+        treeView.setDefaultContainerStyle(R.style.TreeNodeStyleDivided, true);
+        foldersContainer.addView(treeView.getView());
     }
 
     public void goHome() {
@@ -246,6 +283,7 @@ public class MainActivity extends AppCompatActivity {
                 .setView(viewInflated)
                 .setPositiveButton("Create", new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int whichButton) {
+
                         /* Date: 10/03/2017
                         Francis: Adds the user input to the list of folders. To be established
                         later. */
@@ -255,12 +293,34 @@ public class MainActivity extends AppCompatActivity {
                             return;
                         }
 
-                        // Add a folder to the db.
+                        String feedUrl = mEditText.getText().toString().toLowerCase();
+                        if (feedUrl.length() == 0) {
+                            Toast.makeText(MainActivity.this, "Your feed url cannot be blank.", Toast.LENGTH_LONG).show();
+                            return;
+                        }
+
+                        /* Date: 19/04/2017
+                        Wanda: Get a writeable database. */
                         DBHelper mDbHelper = new DBHelper(getApplicationContext());
                         SQLiteDatabase db = mDbHelper.getWritableDatabase();
+
+                        /* Date: 19/04/2017
+                        Incoming #3010
+                        Wanda: Add folder to the db. */
                         ContentValues folderValues = new ContentValues();
                         folderValues.put(FolderEntry.TITLE, folderName);
-                        db.insert(FolderEntry.TABLE_NAME, null, folderValues);
+                        long folderID = db.insert(FolderEntry.TABLE_NAME, null, folderValues);
+
+                        /* Date: 19/04/2017
+                        Incoming #3023
+                        Wanda: Add feed to the db. */
+                        ContentValues feedValues = new ContentValues();
+                        feedValues.put(FeedEntry.URL, feedUrl);
+                        feedValues.put(FeedEntry.FOLDER_ID, folderID);
+                        db.insert(FeedEntry.TABLE_NAME, null, feedValues);
+
+                        /* Date: 19/04/2017
+                        Wanda: Refresh UI. */
                         self.refreshFolders();
                     }
                 })
@@ -288,7 +348,7 @@ public class MainActivity extends AppCompatActivity {
 
 
         /* Date: 16/02/2017
-        For no functionality, the below if statement is sufficient. */
+        Francis: For no functionality, the below if statement is sufficient. */
         if(mToggle.onOptionsItemSelected(item)){
             return(true);
         }
