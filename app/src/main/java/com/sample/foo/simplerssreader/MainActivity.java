@@ -18,7 +18,9 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.PopupMenu;
 import android.support.v7.widget.RecyclerView;
+import android.text.Editable;
 import android.text.TextUtils;
+import android.text.TextWatcher;
 import android.util.Log;
 import android.util.Xml;
 import android.view.LayoutInflater;
@@ -96,6 +98,8 @@ public class MainActivity extends AppCompatActivity {
         mFeedDescriptionTextView = (TextView) findViewById(R.id.feedDescription);
         View mHomeButton = findViewById(R.id.menu).findViewById(R.id.homeButton);
 
+
+
         /* Date: 16/03/2017
         Incoming #3026
         Joline: This is for the history set up, used AutoCompleteTextView. mEditText, used to be
@@ -130,6 +134,32 @@ public class MainActivity extends AppCompatActivity {
                self.goHome();
            }
        });
+
+
+
+           /*
+            Date: 22/03/2017
+            Issue: #3591
+            Apurv: Making sure the Subscribe button remains disabled (we only want to enable it unless there is a legitimate link posted)
+        */
+        mSubscribeButton.setEnabled(false);
+        mEditText.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+                mSubscribeButton.setEnabled(false);
+            }
+
+            @Override
+            public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+
+            }
+
+            @Override
+            public void afterTextChanged(Editable editable) {
+
+            }
+        });
+
 
         mRecyclerView.setLayoutManager(new LinearLayoutManager(this));
 
@@ -654,6 +684,12 @@ public class MainActivity extends AppCompatActivity {
                 mFeedTitleTextView.setText("Feed Title: " + mFeedTitle);
                 mFeedDescriptionTextView.setText("Feed Description: " + mFeedDescription);
                 mRecyclerView.setAdapter(new RssFeedListAdapter(mFeedModelList));
+                 /*
+                 Date: 22/03/2017
+                  Issue: #3591
+                Apurv: Making sure the Subscribe button is enabled since we found proper link
+            */
+                mSubscribeButton.setEnabled(true);
             } else {
                 Toast.makeText(MainActivity.this,
                         "Enter a Valid RSS Feed URL",
