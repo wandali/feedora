@@ -70,6 +70,7 @@ public class MainActivity extends AppCompatActivity {
     private ArrayAdapter<String> mAdapter;
     private List<String> mHistoryList;
     private Button mSubscribeButton;
+    private Button mEditButton;
     private SwipeRefreshLayout mSwipeLayout;
     private TextView mFeedTitleTextView;
     private TextView mFeedDescriptionTextView;
@@ -80,7 +81,7 @@ public class MainActivity extends AppCompatActivity {
     /* Date 03/22/2017
     Incoming: #3591
     Francis: Safe variable copies mFeedTitle. Use this instead and pass it around. */
-    private String titlePass=null;
+    private String titlePass = null;
 
 
     @Override
@@ -116,7 +117,7 @@ public class MainActivity extends AppCompatActivity {
         mEditText.setThreshold(0);
         mEditText.enoughToFilter();
         mEditText.setAdapter(mAdapter);
-        mEditText.setOnTouchListener(new View.OnTouchListener(){
+        mEditText.setOnTouchListener(new View.OnTouchListener() {
             @Override
             public boolean onTouch(View v, MotionEvent event) {
                 mEditText.showDropDown();
@@ -129,17 +130,18 @@ public class MainActivity extends AppCompatActivity {
         mSwipeLayout = (SwipeRefreshLayout) findViewById(R.id.swipeRefreshLayout);
         mFeedTitleTextView = (TextView) findViewById(R.id.feedTitle);
         mFeedDescriptionTextView = (TextView) findViewById(R.id.feedDescription);
+        mEditButton = (Button) findViewById(R.id.edit);
 
         mHomeButton.setOnClickListener(new View.OnClickListener() {
-           /* Date: 13/03/2017
-           Incoming #3013
-           Used to set an action listener to the home button to direct the user to the home screen. */
-           @Override
-           public void onClick(View view) {
-               Log.v(TAG, "Clicked Home.");
-               self.goHome();
-           }
-       });
+            /* Date: 13/03/2017
+            Incoming #3013
+            Used to set an action listener to the home button to direct the user to the home screen. */
+            @Override
+            public void onClick(View view) {
+                Log.v(TAG, "Clicked Home.");
+                self.goHome();
+            }
+        });
 
 
 
@@ -232,7 +234,7 @@ public class MainActivity extends AppCompatActivity {
                 Wanda: Push folder items onto the subscribe popup menu. */
                 int folderNameIndex = cursor.getColumnIndexOrThrow(FolderEntry.TITLE);
                 int folderIDIndex = cursor.getColumnIndexOrThrow(FolderEntry._ID);
-                while(cursor.moveToNext()) {
+                while (cursor.moveToNext()) {
                     String folderName = cursor.getString(folderNameIndex);
                     int folderID = cursor.getInt(folderIDIndex);
                     popup.getMenu().add(Menu.NONE, folderID, Menu.NONE, folderName);
@@ -242,10 +244,8 @@ public class MainActivity extends AppCompatActivity {
                 /* Date: 16/02/2017
                 Francis: Registering popup with OnMenuItemClickListener. So you can click on the
                 options */
-                popup.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener()
-                {
-                    public boolean onMenuItemClick(MenuItem item)
-                    {
+                popup.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
+                    public boolean onMenuItemClick(MenuItem item) {
                         int id = item.getItemId();
                         if (id == R.id.Add) {
                             self.openCreateFolderDialog();
@@ -261,10 +261,9 @@ public class MainActivity extends AppCompatActivity {
                             ContentValues feedValues = new ContentValues();
                             feedValues.put(FeedEntry.URL, subscribeUrl);
                             feedValues.put(FeedEntry.FOLDER_ID, id);
-                            if (urlName==null){
+                            if (urlName == null) {
                                 feedValues.put(FeedEntry.FEED_TITLE, "null");
-                            }
-                            else {
+                            } else {
                                 feedValues.put(FeedEntry.FEED_TITLE, urlName);
                             }
                             db.insert(FeedEntry.TABLE_NAME, null, feedValues);
@@ -277,7 +276,56 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+        mEditButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                PopupMenu popup = new PopupMenu(MainActivity.this, mSubscribeButton);
+                DBHelper mDbHelper = new DBHelper(getApplicationContext());
+                SQLiteDatabase db = mDbHelper.getReadableDatabase();
+                String[] projection = {
+                        FolderEntry._ID,
+                        FolderEntry.TITLE,
+
+                };
+                String sortOrder = FolderEntry.TITLE + " ASC";
+                Cursor cursor = db.query(
+                        FolderEntry.TABLE_NAME,
+                        projection,
+                        null,
+                        null,
+                        null,
+                        null,
+                        sortOrder
+                );
+                int folderNameIndex = cursor.getColumnIndexOrThrow(FolderEntry.TITLE);
+                int folderIDIndex = cursor.getColumnIndexOrThrow(FolderEntry._ID);
+                while (cursor.moveToNext()) {
+                    String folderName = cursor.getString(folderNameIndex);
+                    int folderID = cursor.getInt(folderIDIndex);
+                    popup.getMenu().add(Menu.NONE, folderID, Menu.NONE, folderName);
+
+                }
+                cursor.close();
+
+                popup.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
+                    public boolean onMenuItemClick(MenuItem item) {
+                        final int folderID = item.getItemId();
+                        if (folderID == R.id.Add) {
+                            self.openCreateFolderDialog();
+                            return true;
+
+                        } else {
+                            self.editFolderDialog(folderID);
+                            return true;
+                        }
+                    }
+                });
+                popup.show();
+
+            }
+        });
         self.refreshFolders();
+
     }
 
     public void refreshFolders() {
@@ -293,10 +341,10 @@ public class MainActivity extends AppCompatActivity {
         SQLiteQueryBuilder queryBuilder = new SQLiteQueryBuilder();
         queryBuilder.setTables(
                 FeedEntry.TABLE_NAME +
-                " feeds LEFT OUTER JOIN " +
-                FolderEntry.TABLE_NAME +
-                " folders ON " +
-                "feeds." + FeedEntry.FOLDER_ID + " = folders." + FolderEntry._ID
+                        " feeds LEFT OUTER JOIN " +
+                        FolderEntry.TABLE_NAME +
+                        " folders ON " +
+                        "feeds." + FeedEntry.FOLDER_ID + " = folders." + FolderEntry._ID
         );
 
         System.out.println(
@@ -322,33 +370,42 @@ public class MainActivity extends AppCompatActivity {
         TreeNode root = TreeNode.root();
         Context context = this;
         TreeNode folderNode = null;
-        while(cursor.moveToNext()) {
+        while (cursor.moveToNext()) {
             String folderName = cursor.getString(folderNameIndex);
             String feedUrl = cursor.getString(feedUrlIndex);
             String feedTitle = cursor.getString(feedTitleIndex);
 
             int folderID = cursor.getInt(folderIDIndex);
 
-            /* Date: 19/04/2017
-            Incoming #3010
-            Wanda: Push a new folder if it's a new folderID. */
-            if (folderID != prevFolderId) {
-                folderNode = new TreeNode(new FolderTreeItemHolder.IconTreeItem(folderName))
-                        .setViewHolder(new FolderTreeItemHolder(context));
-                root.addChild(folderNode);
-                prevFolderId = folderID;
+            /* Date: 22/03/2017
+            Incoming #3012
+            Kendra: Check if folder name is empty, if so do not display folder, statement added
+            to help with deleting folders*/
+            if (folderName != null && !folderName.isEmpty()) {
+                /* Date: 19/04/2017
+                Incoming: #3010
+                Wanda: Push a new folder if it's a new folderID. */
+                if (folderID != prevFolderId) {
+                    folderNode = new TreeNode(new FolderTreeItemHolder.IconTreeItem(folderName))
+                            .setViewHolder(new FolderTreeItemHolder(context));
+                    root.addChild(folderNode);
+                    prevFolderId = folderID;
+                }
+
+
+                /* Date: 19/04/2017
+                Incoming #3023
+                Wanda: Push the feed onto the folder. */
+                if (feedUrl != null) {
+                    /* Date 03/22/2017
+                    Incoming: #3591 Sending the feed title instead of the url to the folders. */
+                    TreeNode feedNode = new TreeNode(new FeedTreeItemHolder.IconTreeItem(feedTitle))
+                            .setViewHolder(new FeedTreeItemHolder(this));
+                    assert folderNode != null;
+                    folderNode.addChildren(feedNode);
+                }
             }
-            /* Date: 19/04/2017
-            Incoming #3023
-            Wanda: Push the feed onto the folder. */
-            if (feedUrl != null) {
-                /* Date 03/22/2017
-                Issue: #3591 Sending the feed title instead of the url to the folders. */
-                TreeNode feedNode = new TreeNode(new FeedTreeItemHolder.IconTreeItem(feedTitle))
-                        .setViewHolder(new FeedTreeItemHolder(this));
-                assert folderNode != null;
-                folderNode.addChildren(feedNode);
-            }
+
         }
         cursor.close();
 
@@ -358,11 +415,73 @@ public class MainActivity extends AppCompatActivity {
         foldersContainer.addView(treeView.getView());
     }
 
+    /* Date: 22/03/2017
+    Incoming: #3013
+    Kendra: Listener for home button, once clicked main activity is
+    refreshed and user is brought home */
     public void goHome() {
-        Intent homeIntent = new Intent (this, MainActivity.class);
+        Intent homeIntent = new Intent(this, MainActivity.class);
         homeIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
         startActivity(homeIntent);
 
+    }
+
+    /* Date: 22/03/2017
+    Incoming: #3014
+    Kendra: Listener for edit button for the folders menu, allows user to edit folders they created
+    Pre: folderID is passed in, which holds the folder info the user has chosen to edit*/
+    public void editFolderDialog(final int folderID) {
+        View viewInflated = LayoutInflater
+                .from(this)
+                .inflate(R.layout.dialog_text_input, (ViewGroup) findViewById(android.R.id.content), false);
+        final EditText input = (EditText) viewInflated.findViewById(R.id.input);
+        final MainActivity self = this;
+        new AlertDialog.Builder(this)
+                .setTitle("Edit Folder")
+                .setView(viewInflated)
+                .setPositiveButton("Rename", new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int whichButton) {
+
+                        /* Date: 22/03/2017
+                        Kendra: Get the name the user inputs and save it */
+                        String newFolderName = input.getText().toString().trim();
+                        if (newFolderName.length() == 0) {
+                            Toast.makeText(MainActivity.this, "Folder name cannot be blank. Try Again.",
+                                    Toast.LENGTH_LONG).show();
+                            return;
+                        }
+                        DBHelper mDbHelper = new DBHelper(getApplicationContext());
+                        SQLiteDatabase db = mDbHelper.getReadableDatabase();
+                        ContentValues values = new ContentValues();
+                        values.put(FolderEntry.TITLE, newFolderName);
+                        db.update(
+                                FolderEntry.TABLE_NAME,
+                                values,
+                                "_id = ?",
+                                new String[]{String.valueOf(folderID)});
+                        self.refreshFolders();
+
+                    }
+                })
+                .setNeutralButton("Delete",
+                        new DialogInterface.OnClickListener() {
+                            public void onClick(DialogInterface dialog, int id) {
+                                DBHelper mDbHelper = new DBHelper(getApplicationContext());
+                                SQLiteDatabase db = mDbHelper.getReadableDatabase();
+                                db.delete(
+                                        FolderEntry.TABLE_NAME,
+                                        "_id = ?",
+                                        new String[]{String.valueOf(folderID)});
+                                self.refreshFolders();
+
+                            }
+                        })
+                .setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int whichButton) {
+
+                    }
+                })
+                .show();
     }
 
     public void openCreateFolderDialog() {
@@ -410,10 +529,9 @@ public class MainActivity extends AppCompatActivity {
                         ContentValues feedValues = new ContentValues();
                         feedValues.put(FeedEntry.URL, feedUrl);
                         feedValues.put(FeedEntry.FOLDER_ID, folderID);
-                        if (titlePass==null) {
+                        if (titlePass == null) {
                             feedValues.put(FeedEntry.FEED_TITLE, "null");
-                        }
-                        else {
+                        } else {
                             feedValues.put(FeedEntry.FEED_TITLE, titlePass);
                         }
                         db.insert(FeedEntry.TABLE_NAME, null, feedValues);
@@ -440,7 +558,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     @Override
-    public boolean onOptionsItemSelected(MenuItem item){
+    public boolean onOptionsItemSelected(MenuItem item) {
         /* Date: 16/02/2017
         Francis: Handle action bar item clicks here. (The top right menu) */
         int id = item.getItemId();
@@ -448,8 +566,8 @@ public class MainActivity extends AppCompatActivity {
 
         /* Date: 16/02/2017
         Francis: For no functionality, the below if statement is sufficient. */
-        if(mToggle.onOptionsItemSelected(item)){
-            return(true);
+        if (mToggle.onOptionsItemSelected(item)) {
+            return (true);
         }
 
         /* Date: 16/02/2017
@@ -508,7 +626,7 @@ public class MainActivity extends AppCompatActivity {
         boolean isStart = true;
         int numTitle = 0;
         List<RssFeedModel> items = new ArrayList<>();
-        List <String> artTitles = new ArrayList<>();
+        List<String> artTitles = new ArrayList<>();
 
         try {
             XmlPullParser xmlPullParser = Xml.newPullParser();
@@ -548,7 +666,7 @@ public class MainActivity extends AppCompatActivity {
                     case "title":
                         title = result;
                         artTitles.add(title);
-                        numTitle ++;
+                        numTitle++;
                         break;
                     case "link":
                         link = result;
@@ -581,32 +699,29 @@ public class MainActivity extends AppCompatActivity {
                         break;
                 }
 
-                if(isStart && isItem){
-                    if(numTitle > 1){
-                            title = artTitles.get(0);
-                            numTitle = 0;
-                    }
-                    else if(numTitle == artTitles.size()){
+                if (isStart && isItem) {
+                    if (numTitle > 1) {
+                        title = artTitles.get(0);
+                        numTitle = 0;
+                    } else if (numTitle == artTitles.size()) {
                         title = "";
-                    }
-                    else{
+                    } else {
                         Log.e(TAG, "ERROR: PARSING FEED TITLE");
                     }
                     mFeedTitle = title;
-                    titlePass =title;
+                    titlePass = title;
                     mFeedDescription = description;
                     isStart = false;
                     title = null;
                     link = null;
                     description = null;
                 }
-                
+
                 if (title != null && link != null && description != null && endItem) {
                     if (isItem) {
-                        if(numTitle == artTitles.size()){
+                        if (numTitle == artTitles.size()) {
                             title = artTitles.get(numTitle - 2);
-                        }
-                        else{
+                        } else {
                             title = artTitles.get(numTitle);
                         }
                         //Log.d("MainActivity",title+ " " + link + " "+ description + " " + thumbUrl);
@@ -701,12 +816,12 @@ public class MainActivity extends AppCompatActivity {
         Incoming #3026
         Joline: This function updates the adapter and history list by adding the
         most recent accepted url submitted by the user. Shows the most recent url first */
-        void updateHistory(String feedURL){
-            if(!mHistoryList.contains(feedURL)){
-                if(mHistoryList.size() == 5){
+        void updateHistory(String feedURL) {
+            if (!mHistoryList.contains(feedURL)) {
+                if (mHistoryList.size() == 5) {
                     mHistoryList.remove(4);
                 }
-                mHistoryList.add(0,feedURL);
+                mHistoryList.add(0, feedURL);
                 mAdapter.clear();
                 mAdapter.addAll(mHistoryList);
                 mAdapter.notifyDataSetChanged();
