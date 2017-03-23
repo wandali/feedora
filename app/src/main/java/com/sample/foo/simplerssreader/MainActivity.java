@@ -74,12 +74,12 @@ public class MainActivity extends AppCompatActivity {
     private TextView mFeedTitleTextView;
     private TextView mFeedDescriptionTextView;
     private List<RssFeedModel> mFeedModelList;
-    private String mFeedTitle;
-    private String mFeedDescription;
+    private String mFeedTitle = "";
+    private String mFeedDescription = "";
 
     /* Date 03/22/2017
-    Issue: #3591
-     Safe variable copies mFeedTitle. Use this instead and pass it around. */
+    Incoming: #3591
+    Francis: Safe variable copies mFeedTitle. Use this instead and pass it around. */
     private String titlePass=null;
 
 
@@ -643,9 +643,9 @@ public class MainActivity extends AppCompatActivity {
         protected void onPreExecute() {
             mSwipeLayout.setRefreshing(true);
             if (!mEditText.getText().toString().matches("")) {
-                mFeedTitle = null;
+                mFeedTitle = "";
+                mFeedDescription = "";
                 titlePass = null;
-                mFeedDescription = null;
             }
             mFeedTitleTextView.setText("Feed Title: " + mFeedTitle);
             mFeedDescriptionTextView.setText("Feed Description: " + mFeedDescription);
@@ -686,19 +686,21 @@ public class MainActivity extends AppCompatActivity {
                     URL url = new URL(urlLink);
                     stream = url.openConnection().getInputStream();
                 }
+                if (stream == null) throw new IOException();
                 mFeedModelList = parseFeed(stream);
                 updateHistory(urlLink);
                 return true;
             } catch (IOException | XmlPullParserException e) {
                 Log.e(TAG, "Error", e);
+                mFeedModelList.clear();
             }
             return false;
         }
 
-        /*Date: 16/03/2017
+        /* Date: 16/03/2017
         Incoming #3026
         Joline: This function updates the adapter and history list by adding the
-        most recent accepted url submitted by the user. Shows the most recent url first*/
+        most recent accepted url submitted by the user. Shows the most recent url first */
         void updateHistory(String feedURL){
             if(!mHistoryList.contains(feedURL)){
                 if(mHistoryList.size() == 5){
@@ -720,11 +722,9 @@ public class MainActivity extends AppCompatActivity {
                 mFeedTitleTextView.setText("Feed Title: " + mFeedTitle);
                 mFeedDescriptionTextView.setText("Feed Description: " + mFeedDescription);
                 mRecyclerView.setAdapter(new RssFeedListAdapter(mFeedModelList));
-                 /*
-                 Date: 22/03/2017
-                  Issue: #3591
-                Apurv: Making sure the Subscribe button is enabled since we found proper link
-            */
+                /* Date: 22/03/2017
+                Issue: #3591
+                Apurv: Making sure the Subscribe button is enabled since we found proper link */
                 mSubscribeButton.setEnabled(true);
             } else {
                 Toast.makeText(MainActivity.this,
