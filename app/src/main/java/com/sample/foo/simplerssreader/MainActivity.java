@@ -77,6 +77,12 @@ public class MainActivity extends AppCompatActivity {
     private String mFeedTitle;
     private String mFeedDescription;
 
+    /* Date 03/22/2017
+    Issue: #3591
+     Safe variable copies mFeedTitle. Use this instead and pass it around. */
+    private String titlePass=null;
+
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -249,11 +255,18 @@ public class MainActivity extends AppCompatActivity {
                              Incoming #3010
                              Wanda: Add a folder to the db. */
                             final String subscribeUrl = mEditText.getText().toString();
+                            final String urlName = titlePass;
                             DBHelper mDbHelper = new DBHelper(getApplicationContext());
                             SQLiteDatabase db = mDbHelper.getWritableDatabase();
                             ContentValues feedValues = new ContentValues();
                             feedValues.put(FeedEntry.URL, subscribeUrl);
                             feedValues.put(FeedEntry.FOLDER_ID, id);
+                            if (urlName==null){
+                                feedValues.put(FeedEntry.FEED_TITLE, "null");
+                            }
+                            else {
+                                feedValues.put(FeedEntry.FEED_TITLE, urlName);
+                            }
                             db.insert(FeedEntry.TABLE_NAME, null, feedValues);
                             self.refreshFolders();
                         }
@@ -285,6 +298,16 @@ public class MainActivity extends AppCompatActivity {
                 " folders ON " +
                 "feeds." + FeedEntry.FOLDER_ID + " = folders." + FolderEntry._ID
         );
+
+        System.out.println(
+                FeedEntry.TABLE_NAME +
+                        " feeds LEFT OUTER JOIN " +
+                        FolderEntry.TABLE_NAME +
+                        " folders ON " +
+                        "feeds." + FeedEntry.FOLDER_ID + " = folders." + FolderEntry._ID
+        );
+
+
         String sortOrder = FolderEntry.TITLE + " ASC";
         Cursor cursor = queryBuilder.query(db, null, null, null, null, null, sortOrder);
 
@@ -294,6 +317,7 @@ public class MainActivity extends AppCompatActivity {
         int folderNameIndex = cursor.getColumnIndex(FolderEntry.TITLE);
         int folderIDIndex = cursor.getColumnIndex(FolderEntry._ID);
         int feedUrlIndex = cursor.getColumnIndex(FeedEntry.URL);
+        int feedTitleIndex = cursor.getColumnIndex(FeedEntry.FEED_TITLE);
         int prevFolderId = -1;
         TreeNode root = TreeNode.root();
         Context context = this;
@@ -301,6 +325,8 @@ public class MainActivity extends AppCompatActivity {
         while(cursor.moveToNext()) {
             String folderName = cursor.getString(folderNameIndex);
             String feedUrl = cursor.getString(feedUrlIndex);
+            String feedTitle = cursor.getString(feedTitleIndex);
+
             int folderID = cursor.getInt(folderIDIndex);
 
             /* Date: 19/04/2017
@@ -316,7 +342,9 @@ public class MainActivity extends AppCompatActivity {
             Incoming #3023
             Wanda: Push the feed onto the folder. */
             if (feedUrl != null) {
-                TreeNode feedNode = new TreeNode(new FeedTreeItemHolder.IconTreeItem(feedUrl))
+                /* Date 03/22/2017
+                Issue: #3591 Sending the feed title instead of the url to the folders. */
+                TreeNode feedNode = new TreeNode(new FeedTreeItemHolder.IconTreeItem(feedTitle))
                         .setViewHolder(new FeedTreeItemHolder(this));
                 assert folderNode != null;
                 folderNode.addChildren(feedNode);
@@ -358,7 +386,6 @@ public class MainActivity extends AppCompatActivity {
                             Toast.makeText(MainActivity.this, "Enter a folder name.", Toast.LENGTH_LONG).show();
                             return;
                         }
-
                         String feedUrl = mEditText.getText().toString().toLowerCase();
                         if (feedUrl.length() == 0) {
                             Toast.makeText(MainActivity.this, "Your feed url cannot be blank.", Toast.LENGTH_LONG).show();
@@ -383,6 +410,12 @@ public class MainActivity extends AppCompatActivity {
                         ContentValues feedValues = new ContentValues();
                         feedValues.put(FeedEntry.URL, feedUrl);
                         feedValues.put(FeedEntry.FOLDER_ID, folderID);
+                        if (titlePass==null) {
+                            feedValues.put(FeedEntry.FEED_TITLE, "null");
+                        }
+                        else {
+                            feedValues.put(FeedEntry.FEED_TITLE, titlePass);
+                        }
                         db.insert(FeedEntry.TABLE_NAME, null, feedValues);
 
                         /* Date: 19/04/2017
@@ -560,6 +593,7 @@ public class MainActivity extends AppCompatActivity {
                         Log.e(TAG, "ERROR: PARSING FEED TITLE");
                     }
                     mFeedTitle = title;
+                    titlePass =title;
                     mFeedDescription = description;
                     isStart = false;
                     title = null;
@@ -582,6 +616,7 @@ public class MainActivity extends AppCompatActivity {
                         items.add(item);
                     } else {
                         mFeedTitle = title;
+                        titlePass = title;
                         mFeedDescription = description;
                     }
 
@@ -609,6 +644,7 @@ public class MainActivity extends AppCompatActivity {
             mSwipeLayout.setRefreshing(true);
             if (!mEditText.getText().toString().matches("")) {
                 mFeedTitle = null;
+                titlePass = null;
                 mFeedDescription = null;
             }
             mFeedTitleTextView.setText("Feed Title: " + mFeedTitle);

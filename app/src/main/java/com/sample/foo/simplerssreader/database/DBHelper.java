@@ -11,7 +11,7 @@ public class DBHelper extends SQLiteOpenHelper {
     /* Date: 19/04/2017
     Incoming #3010
     Wanda: Update when changing scheme. */
-    private static final int DATABASE_VERSION = 1;
+    private static final int DATABASE_VERSION = 6;
     private static final String DATABASE_NAME = "FeedReader.db";
 
     private static final String SQL_CREATE_FOLDERS_TABLE =
@@ -23,7 +23,8 @@ public class DBHelper extends SQLiteOpenHelper {
             "CREATE TABLE " + FeedEntry.TABLE_NAME + " (" +
                     FeedEntry._ID + " INTEGER PRIMARY KEY," +
                     FeedEntry.FOLDER_ID + " INTEGER," +
-                    FeedEntry.URL + " TEXT)";
+                    FeedEntry.URL + " TEXT," +
+                    FeedEntry.FEED_TITLE + " TEXT)";
 
     private static final String SQL_DELETE_FOLDER_ENTRIES =
             "DROP TABLE IF EXISTS " + FolderEntry.TABLE_NAME;

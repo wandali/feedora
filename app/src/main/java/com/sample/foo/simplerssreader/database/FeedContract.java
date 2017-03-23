@@ -9,5 +9,6 @@ public final class FeedContract {
         public static final String TABLE_NAME = "feeds";
         public static final String URL = "url";
         public static final String FOLDER_ID = "folder_id";
+        public static final String FEED_TITLE = "feed_title";
     }
 }
