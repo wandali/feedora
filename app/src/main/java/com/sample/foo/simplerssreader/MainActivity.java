@@ -2,6 +2,8 @@ package com.sample.foo.simplerssreader;
 
 import android.app.AlertDialog;
 import android.content.DialogInterface;
+import android.content.SharedPreferences;
+import android.net.Uri;
 import android.os.AsyncTask;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v4.widget.SwipeRefreshLayout;
@@ -30,6 +32,11 @@ import android.widget.TextView;
 import android.widget.Toast;
 import android.content.Intent;
 
+import com.google.android.gms.appindexing.Action;
+import com.google.android.gms.appindexing.AppIndex;
+import com.google.android.gms.appindexing.Thing;
+import com.google.android.gms.common.api.GoogleApiClient;
+
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
 
@@ -49,9 +56,10 @@ import java.text.SimpleDateFormat;
 public class MainActivity extends AppCompatActivity {
 
     private static final String TAG = "MainActivity";
+    private static final String historyFile = "History_Pref";
 
     private static String[] subList = new String[15];
-    private static int subTracker=0;
+    private static int subTracker = 0;
 
     private DrawerLayout mDrawerLayout;
     private ActionBarDrawerToggle mToggle;
@@ -67,12 +75,18 @@ public class MainActivity extends AppCompatActivity {
     private AutoCompleteTextView mEditText;
     private ArrayAdapter<String> mAdapter;
     private List<String> mHistoryList;
+    private SharedPreferences sharedPref;
 
     private List<RssFeedModel> mFeedModelList;
     private String mFeedTitle;
     private String mFeedDescription;
 
     private LinearLayout mLinearLayout;
+    /**
+     * ATTENTION: This was auto-generated to implement the App Indexing API.
+     * See https://g.co/AppIndexing/AndroidStudio for more information.
+     */
+    private GoogleApiClient client;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -100,11 +114,12 @@ public class MainActivity extends AppCompatActivity {
         * of type "Edit Text" kept name and tag id in case used elsewhere in program*/
         mEditText = (AutoCompleteTextView) findViewById(R.id.rssFeedEditText);
         mHistoryList = new ArrayList<>();
-        mAdapter = new ArrayAdapter<>(this, android.R.layout.simple_dropdown_item_1line,mHistoryList);
+        getHistory();
+        mAdapter = new ArrayAdapter<>(this, android.R.layout.simple_dropdown_item_1line, mHistoryList);
         mEditText.setThreshold(0);
         mEditText.enoughToFilter();
         mEditText.setAdapter(mAdapter);
-        mEditText.setOnTouchListener(new View.OnTouchListener(){
+        mEditText.setOnTouchListener(new View.OnTouchListener() {
             @Override
             public boolean onTouch(View v, MotionEvent event) {
                 mEditText.showDropDown();
@@ -139,34 +154,28 @@ public class MainActivity extends AppCompatActivity {
                 self.goHome();
             }
         });
-        subFeedButton.setOnClickListener(new View.OnClickListener()
-        {
+        subFeedButton.setOnClickListener(new View.OnClickListener() {
             /* Date: 16/02/2017
             Francis: IMPORTANT NOTE: READ THIS FOR ADDING NEW MENU ITEMS PROGRAMATICALLY
             popup.getMenu().add(groupId, itemId, order, title); for each menuItem you want to add.
             This comment is left in for the other group members. Depending on if I wind up
             not working on adding new items to the drop down menu. */
             @Override
-            public void onClick(View view)
-            {
-                PopupMenu popup = new PopupMenu(MainActivity.this,subFeedButton);
+            public void onClick(View view) {
+                PopupMenu popup = new PopupMenu(MainActivity.this, subFeedButton);
                 /* Date: 16/02/2017
                 Francis: Inflating the Popup through the xml file */
                 popup.getMenuInflater().inflate(R.menu.subscribe_menu, popup.getMenu());
-                for(int i=0;i<subTracker;++i)
-                {
-                    popup.getMenu().add(Menu.NONE,subTracker,Menu.NONE,subList[i]);
+                for (int i = 0; i < subTracker; ++i) {
+                    popup.getMenu().add(Menu.NONE, subTracker, Menu.NONE, subList[i]);
                 }
                 /* Date: 16/02/2017
                 Francis: Registering popup with OnMenuItemClickListener. So you can click on the
                 options */
-                popup.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener()
-                {
-                    public boolean onMenuItemClick(MenuItem item)
-                    {
+                popup.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
+                    public boolean onMenuItemClick(MenuItem item) {
                         int id = item.getItemId();
-                        if (id == R.id.Add)
-                        {
+                        if (id == R.id.Add) {
                             self.openCreateFolder();
                             return true;
                         }
@@ -176,10 +185,13 @@ public class MainActivity extends AppCompatActivity {
                 popup.show();
             }
         });
+        // ATTENTION: This was auto-generated to implement the App Indexing API.
+        // See https://g.co/AppIndexing/AndroidStudio for more information.
+        client = new GoogleApiClient.Builder(this).addApi(AppIndex.API).build();
     }
 
     public void goHome() {
-        Intent homeIntent = new Intent (this, MainActivity.class);
+        Intent homeIntent = new Intent(this, MainActivity.class);
         homeIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
         startActivity(homeIntent);
 
@@ -201,10 +213,10 @@ public class MainActivity extends AppCompatActivity {
                         later. */
                         String folderName = input.getText().toString();
 
-                        subList[subTracker]=folderName;
+                        subList[subTracker] = folderName;
                         ++subTracker;
 
-                        mLinearLayout = (LinearLayout)findViewById(R.id.subFeedList);
+                        mLinearLayout = (LinearLayout) findViewById(R.id.subFeedList);
                         TextView customSub = new TextView(MainActivity.this);
                         customSub.setText(folderName);
                         customSub.setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
@@ -218,7 +230,16 @@ public class MainActivity extends AppCompatActivity {
                 .show();
     }
 
+    public boolean checkFolderExist(String[] folderList, String folderName){
+        boolean folderExists = false;
+        int size = folderList.length;
+        for(int i = 0; i < size; i ++){
+            if(folderList[i].equals(folderName))
+                folderExists = true;
 
+        }
+        return folderExists;
+    }
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         /* Date: 16/02/2017
@@ -227,8 +248,9 @@ public class MainActivity extends AppCompatActivity {
         getMenuInflater().inflate(R.menu.menu_main, menu);
         return true;
     }
+
     @Override
-    public boolean onOptionsItemSelected(MenuItem item){
+    public boolean onOptionsItemSelected(MenuItem item) {
         /* Date: 16/02/2017
         Francis: Handle action bar item clicks here. (The top right menu) */
         int id = item.getItemId();
@@ -236,8 +258,8 @@ public class MainActivity extends AppCompatActivity {
 
         /* Date: 16/02/2017
         For no functionality, the below if statement is sufficient. */
-        if(mToggle.onOptionsItemSelected(item)){
-            return(true);
+        if (mToggle.onOptionsItemSelected(item)) {
+            return (true);
         }
 
         /* Date: 16/02/2017
@@ -282,6 +304,7 @@ public class MainActivity extends AppCompatActivity {
         }
         return super.onOptionsItemSelected(item);
     }
+
     public List<RssFeedModel> parseFeed(InputStream inputStream) throws XmlPullParserException, IOException {
         String title = null;
         String link = null;
@@ -295,7 +318,7 @@ public class MainActivity extends AppCompatActivity {
         boolean isStart = true;
         int numTitle = 0;
         List<RssFeedModel> items = new ArrayList<>();
-        List <String> artTitles = new ArrayList<>();
+        List<String> artTitles = new ArrayList<>();
 
         try {
             XmlPullParser xmlPullParser = Xml.newPullParser();
@@ -335,7 +358,7 @@ public class MainActivity extends AppCompatActivity {
                     case "title":
                         title = result;
                         artTitles.add(title);
-                        numTitle ++;
+                        numTitle++;
                         break;
                     case "link":
                         link = result;
@@ -368,15 +391,13 @@ public class MainActivity extends AppCompatActivity {
                         break;
                 }
 
-                if(isStart && isItem){
-                    if(numTitle > 1){
-                            title = artTitles.get(0);
-                            numTitle = 0;
-                    }
-                    else if(numTitle == artTitles.size()){
+                if (isStart && isItem) {
+                    if (numTitle > 1) {
+                        title = artTitles.get(0);
+                        numTitle = 0;
+                    } else if (numTitle == artTitles.size()) {
                         title = "";
-                    }
-                    else{
+                    } else {
                         Log.d("MainActivity", "ERROR: PARSING FEED TITLE");
                     }
                     mFeedTitle = title;
@@ -386,13 +407,12 @@ public class MainActivity extends AppCompatActivity {
                     link = null;
                     description = null;
                 }
-                
+
                 if (title != null && link != null && description != null && endItem) {
                     if (isItem) {
-                        if(numTitle == artTitles.size()){
+                        if (numTitle == artTitles.size()) {
                             title = artTitles.get(numTitle - 2);
-                        }
-                        else{
+                        } else {
                             title = artTitles.get(numTitle);
                         }
                         //Log.d("MainActivity",title+ " " + link + " "+ description + " " + thumbUrl);
@@ -418,6 +438,63 @@ public class MainActivity extends AppCompatActivity {
         } finally {
             inputStream.close();
         }
+    }
+    /*Date: 03/22/2017
+    * Joline: Uses shared preferences to get the saved hisory from another instance of the app*/
+    public void getHistory(){
+        sharedPref = getSharedPreferences(historyFile, 0);
+        int size = sharedPref.getInt("list_size", 0);
+        for(int i = 0; i < size; i++)
+            mHistoryList.add(sharedPref.getString("url_"+i,null));
+    }
+    /*Date: 03/22/2017
+    * Joline: saves the users url list via shared preferences*/
+    public void setHistory(){
+        sharedPref = getSharedPreferences(historyFile, 0);
+        SharedPreferences.Editor editor = sharedPref.edit();
+        int size = mHistoryList.size();
+        editor.putInt("list_size", size);
+        for(int i = 0; i < size; i++)
+            editor.putString("url_"+ i, mHistoryList.get(i));
+        editor.apply();
+    }
+
+    /**
+     * ATTENTION: This was auto-generated to implement the App Indexing API.
+     * See https://g.co/AppIndexing/AndroidStudio for more information.
+     */
+    public Action getIndexApiAction() {
+        Thing object = new Thing.Builder()
+                .setName("Main Page") // TODO: Define a title for the content shown.
+                // TODO: Make sure this auto-generated URL is correct.
+                .setUrl(Uri.parse("http://[ENTER-YOUR-URL-HERE]"))
+                .build();
+        return new Action.Builder(Action.TYPE_VIEW)
+                .setObject(object)
+                .setActionStatus(Action.STATUS_TYPE_COMPLETED)
+                .build();
+    }
+
+    @Override
+    public void onStart() {
+        super.onStart();
+
+        // ATTENTION: This was auto-generated to implement the App Indexing API.
+        // See https://g.co/AppIndexing/AndroidStudio for more information.
+        client.connect();
+        AppIndex.AppIndexApi.start(client, getIndexApiAction());
+    }
+
+    @Override
+    public void onStop() {
+        super.onStop();
+
+        // ATTENTION: This was auto-generated to implement the App Indexing API.
+        // See https://g.co/AppIndexing/AndroidStudio for more information.
+        AppIndex.AppIndexApi.end(client, getIndexApiAction());
+        setHistory();
+
+        client.disconnect();
     }
 
     private class FetchFeedTask extends AsyncTask<Void, Void, Boolean> {
@@ -482,12 +559,12 @@ public class MainActivity extends AppCompatActivity {
         /*Date: 16/03/2017
         * Joline: This function updates the adapter and history list by adding the
         * most recent accepted url submitted by the user. Shows the most recent url first*/
-        public void updateHistory(String feedURL){
-            if(!mHistoryList.contains(feedURL)){
-                if(mHistoryList.size() == 5){
+        public void updateHistory(String feedURL) {
+            if (!mHistoryList.contains(feedURL)) {
+                if (mHistoryList.size() == 5) {
                     mHistoryList.remove(4);
                 }
-                mHistoryList.add(0,feedURL);
+                mHistoryList.add(0, feedURL);
                 mAdapter.clear();
                 mAdapter.addAll(mHistoryList);
                 mAdapter.notifyDataSetChanged();
