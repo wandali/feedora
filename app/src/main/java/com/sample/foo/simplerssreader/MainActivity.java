@@ -294,12 +294,11 @@ public class MainActivity extends AppCompatActivity {
                 popup.show();
             }
         });
-<<<<<<< HEAD
-=======
+
         /* Date: 22/03/2017
         Incoming: #3014
         Kendra: Listener for edit button for the folders menu, allows user to edit folders */
->>>>>>> dubois
+
         mEditButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
