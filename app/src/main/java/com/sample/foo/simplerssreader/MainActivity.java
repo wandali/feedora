@@ -294,10 +294,24 @@ public class MainActivity extends AppCompatActivity {
                 popup.show();
             }
         });
+<<<<<<< HEAD
+=======
+        /* Date: 22/03/2017
+        Incoming: #3014
+        Kendra: Listener for edit button for the folders menu, allows user to edit folders */
+>>>>>>> dubois
         mEditButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                /* Date: 22/03/2017
+                Incoming: #3014
+                Kendra: Inflating the Popup through the xml file, using same menu as subscribe button
+                with create folder option removed*/
                 PopupMenu popup = new PopupMenu(MainActivity.this, mSubscribeButton);
+
+                /* Date: 22/03/2017
+                Incoming: #3014
+                Kendra: Get the folders from db, populate menu */
                 DBHelper mDbHelper = new DBHelper(getApplicationContext());
                 SQLiteDatabase db = mDbHelper.getReadableDatabase();
                 String[] projection = {
@@ -315,6 +329,10 @@ public class MainActivity extends AppCompatActivity {
                         null,
                         sortOrder
                 );
+
+                /* Date: 22/03/2017
+                Incoming #3014
+                Kendra: Push folder items onto the edit folder popup menu. */
                 int folderNameIndex = cursor.getColumnIndexOrThrow(FolderEntry.TITLE);
                 int folderIDIndex = cursor.getColumnIndexOrThrow(FolderEntry._ID);
                 while (cursor.moveToNext()) {
@@ -324,7 +342,9 @@ public class MainActivity extends AppCompatActivity {
 
                 }
                 cursor.close();
-
+                /* Date: 22/03/2017
+                Incoming: #3014
+                Kendra: Menu listeners for each folder in the menu */
                 popup.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
                     public boolean onMenuItemClick(MenuItem item) {
                         final int folderID = item.getItemId();
@@ -464,6 +484,7 @@ public class MainActivity extends AppCompatActivity {
                     public void onClick(DialogInterface dialog, int whichButton) {
 
                         /* Date: 22/03/2017
+                        Incoming: #3014
                         Kendra: Get the name the user inputs and save it */
                         String newFolderName = input.getText().toString().trim();
                         if (newFolderName.length() == 0) {
@@ -471,10 +492,20 @@ public class MainActivity extends AppCompatActivity {
                                     Toast.LENGTH_LONG).show();
                             return;
                         }
+
                         DBHelper mDbHelper = new DBHelper(getApplicationContext());
                         SQLiteDatabase db = mDbHelper.getReadableDatabase();
+
+                        /* Date: 22/03/2017
+                        Incoming: #3014
+                        Kendra: Prepare to put new folder name into db */
                         ContentValues values = new ContentValues();
                         values.put(FolderEntry.TITLE, newFolderName);
+
+                        /* Date: 22/03/2017
+                        Incoming: #3014
+                        Kendra: Based on folderID, update the folders title in the db to the new
+                        title entered by user */
                         db.update(
                                 FolderEntry.TABLE_NAME,
                                 values,
@@ -489,6 +520,9 @@ public class MainActivity extends AppCompatActivity {
                             public void onClick(DialogInterface dialog, int id) {
                                 DBHelper mDbHelper = new DBHelper(getApplicationContext());
                                 SQLiteDatabase db = mDbHelper.getReadableDatabase();
+                                /* Date: 22/03/2017
+                                Incoming: #3012
+                                Kendra: Based on folderID, delete the current folder user has clicked */
                                 db.delete(
                                         FolderEntry.TABLE_NAME,
                                         "_id = ?",
