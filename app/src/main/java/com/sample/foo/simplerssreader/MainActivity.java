@@ -8,6 +8,8 @@ import android.content.Intent;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteQueryBuilder;
+import android.content.SharedPreferences;
+import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v4.widget.DrawerLayout;
@@ -44,6 +46,11 @@ import com.sample.foo.simplerssreader.database.FolderContract.FolderEntry;
 import com.unnamed.b.atv.model.TreeNode;
 import com.unnamed.b.atv.view.AndroidTreeView;
 
+import com.google.android.gms.appindexing.Action;
+import com.google.android.gms.appindexing.AppIndex;
+import com.google.android.gms.appindexing.Thing;
+import com.google.android.gms.common.api.GoogleApiClient;
+
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
 
@@ -63,7 +70,9 @@ import java.util.List;
 public class MainActivity extends AppCompatActivity {
 
     private static final String TAG = "MainActivity";
+    private static final String historyFile = "History_Pref";
 
+    private DrawerLayout mDrawerLayout;
     private ActionBarDrawerToggle mToggle;
     private RecyclerView mRecyclerView;
     private AutoCompleteTextView mEditText;
@@ -74,6 +83,8 @@ public class MainActivity extends AppCompatActivity {
     private SwipeRefreshLayout mSwipeLayout;
     private TextView mFeedTitleTextView;
     private TextView mFeedDescriptionTextView;
+    private SharedPreferences sharedPref;
+
     private List<RssFeedModel> mFeedModelList;
     private String mFeedTitle = "";
     private String mFeedDescription = "";
@@ -83,6 +94,13 @@ public class MainActivity extends AppCompatActivity {
     Francis: Safe variable copies mFeedTitle. Use this instead and pass it around. */
     private String titlePass = null;
 
+
+    private LinearLayout mLinearLayout;
+    /**
+     * ATTENTION: This was auto-generated to implement the App Indexing API.
+     * See https://g.co/AppIndexing/AndroidStudio for more information.
+     */
+    private GoogleApiClient client;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -113,6 +131,7 @@ public class MainActivity extends AppCompatActivity {
         of type "Edit Text" kept name and tag id in case used elsewhere in program*/
         mEditText = (AutoCompleteTextView) findViewById(R.id.rssFeedEditText);
         mHistoryList = new ArrayList<>();
+        getHistory();
         mAdapter = new ArrayAdapter<>(this, android.R.layout.simple_dropdown_item_1line, mHistoryList);
         mEditText.setThreshold(0);
         mEditText.enoughToFilter();
@@ -275,7 +294,6 @@ public class MainActivity extends AppCompatActivity {
                 popup.show();
             }
         });
-
         mEditButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -326,6 +344,9 @@ public class MainActivity extends AppCompatActivity {
         });
         self.refreshFolders();
 
+        // ATTENTION: This was auto-generated to implement the App Indexing API.
+        // See https://g.co/AppIndexing/AndroidStudio for more information.
+        client = new GoogleApiClient.Builder(this).addApi(AppIndex.API).build();
     }
 
     public void refreshFolders() {
@@ -547,7 +568,6 @@ public class MainActivity extends AppCompatActivity {
                 }).show();
     }
 
-
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         /* Date: 16/02/2017
@@ -566,6 +586,7 @@ public class MainActivity extends AppCompatActivity {
 
         /* Date: 16/02/2017
         Francis: For no functionality, the below if statement is sufficient. */
+
         if (mToggle.onOptionsItemSelected(item)) {
             return (true);
         }
@@ -749,6 +770,63 @@ public class MainActivity extends AppCompatActivity {
             inputStream.close();
         }
     }
+    /*Date: 03/22/2017
+    * Joline: Uses shared preferences to get the saved hisory from another instance of the app*/
+    public void getHistory(){
+        sharedPref = getSharedPreferences(historyFile, 0);
+        int size = sharedPref.getInt("list_size", 0);
+        for(int i = 0; i < size; i++)
+            mHistoryList.add(sharedPref.getString("url_"+i,null));
+    }
+    /*Date: 03/22/2017
+    * Joline: saves the users url list via shared preferences*/
+    public void setHistory(){
+        sharedPref = getSharedPreferences(historyFile, 0);
+        SharedPreferences.Editor editor = sharedPref.edit();
+        int size = mHistoryList.size();
+        editor.putInt("list_size", size);
+        for(int i = 0; i < size; i++)
+            editor.putString("url_"+ i, mHistoryList.get(i));
+        editor.apply();
+    }
+
+    /**
+     * ATTENTION: This was auto-generated to implement the App Indexing API.
+     * See https://g.co/AppIndexing/AndroidStudio for more information.
+     */
+    public Action getIndexApiAction() {
+        Thing object = new Thing.Builder()
+                .setName("Main Page") // TODO: Define a title for the content shown.
+                // TODO: Make sure this auto-generated URL is correct.
+                .setUrl(Uri.parse("http://[ENTER-YOUR-URL-HERE]"))
+                .build();
+        return new Action.Builder(Action.TYPE_VIEW)
+                .setObject(object)
+                .setActionStatus(Action.STATUS_TYPE_COMPLETED)
+                .build();
+    }
+
+    @Override
+    public void onStart() {
+        super.onStart();
+
+        // ATTENTION: This was auto-generated to implement the App Indexing API.
+        // See https://g.co/AppIndexing/AndroidStudio for more information.
+        client.connect();
+        AppIndex.AppIndexApi.start(client, getIndexApiAction());
+    }
+
+    @Override
+    public void onStop() {
+        super.onStop();
+
+        // ATTENTION: This was auto-generated to implement the App Indexing API.
+        // See https://g.co/AppIndexing/AndroidStudio for more information.
+        AppIndex.AppIndexApi.end(client, getIndexApiAction());
+        setHistory();
+
+        client.disconnect();
+    }
 
     private class FetchFeedTask extends AsyncTask<Void, Void, Boolean> {
 
@@ -812,11 +890,10 @@ public class MainActivity extends AppCompatActivity {
             return false;
         }
 
-        /* Date: 16/03/2017
-        Incoming #3026
-        Joline: This function updates the adapter and history list by adding the
-        most recent accepted url submitted by the user. Shows the most recent url first */
-        void updateHistory(String feedURL) {
+        /*Date: 16/03/2017
+        * Joline: This function updates the adapter and history list by adding the
+        * most recent accepted url submitted by the user. Shows the most recent url first*/
+        public void updateHistory(String feedURL) {
             if (!mHistoryList.contains(feedURL)) {
                 if (mHistoryList.size() == 5) {
                     mHistoryList.remove(4);
