@@ -1,0 +1,42 @@
+<!-- Date: 16/02/2017
+Francis: This xml implements the top right menu. It was never there before -->
+<menu
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    >
+    <item
+        android:id="@+id/sort"
+        android:orderInCategory="100"
+        android:title=""
+        app:showAsAction="ifRoom"
+        >
+        <menu>
+            <item
+                android:id="@+id/dateOldest"
+                android:orderInCategory="100"
+                android:title="Oldest - Newest"
+                />
+            <item
+                android:id="@+id/articleTitleAZ"
+                android:orderInCategory="101"
+                android:title="A - Z"
+                />
+            <item
+                android:id="@+id/articleTitleZA"
+                android:orderInCategory="102"
+                android:title="Z - A"
+                />
+            <item
+                android:id="@+id/Author"
+                android:orderInCategory="103"
+                android:title="Author"
+                />
+            <item
+                android:id="@+id/Random"
+                android:orderInCategory="104"
+                android:title="Random"
+                />
+        </menu>
+    </item>
+
+</menu>
