@@ -361,8 +361,10 @@ public class MainActivity extends AppCompatActivity {
 
         AndroidTreeView treeView = new AndroidTreeView(this, root);
         treeView.setDefaultAnimation(true);
-        treeView.setDefaultContainerStyle(R.style.TreeNodeStyleDivided, true);
-        foldersContainer.addView(treeView.getView());
+        treeView.setDefaultContainerStyle(R.style.FolderContainerStyle, true);
+        View treeNodeView = treeView.getView();
+        treeNodeView.setBackgroundColor(Color.WHITE);
+        foldersContainer.addView(treeNodeView);
     }
 
     /* Date: 22/03/2017

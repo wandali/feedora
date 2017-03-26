@@ -35,4 +35,9 @@ class FeedTreeItemHolder extends BaseNodeViewHolder<FeedTreeItemHolder.IconTreeI
             this.text = text;
         }
     }
+
+    @Override
+    public int getContainerStyle() {
+        return R.style.FeedContainerStyle;
+    }
 }

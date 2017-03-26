@@ -29,7 +29,13 @@
         <item name="android:background">@color/black_overlay</item>
     </style>
 
-    <style name="TreeNodeStyleDivided">
+    <style name="FeedContainerStyle">
+        <item name="android:showDividers">beginning|middle</item>
+        <item name="android:paddingLeft">48dp</item>
+        <item name="android:divider">?attr/dividerHorizontal</item>
+    </style>
+
+    <style name="FolderContainerStyle">
         <item name="android:showDividers">middle</item>
         <item name="android:divider">?attr/dividerHorizontal</item>
     </style>
