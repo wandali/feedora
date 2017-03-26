@@ -9,6 +9,8 @@ import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteQueryBuilder;
+import android.graphics.Color;
+import android.graphics.drawable.Drawable;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.IBinder;
@@ -39,6 +41,8 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.mikepenz.google_material_typeface_library.GoogleMaterial;
+import com.mikepenz.iconics.IconicsDrawable;
 import com.sample.foo.simplerssreader.database.DBHelper;
 import com.sample.foo.simplerssreader.database.FeedContract.FeedEntry;
 import com.sample.foo.simplerssreader.database.FolderContract.FolderEntry;
@@ -511,7 +515,12 @@ public class MainActivity extends AppCompatActivity {
         /* Date: 16/02/2017
         Francis: Inflate the menu; this adds items to the action bar if it is present.
         menu_main shares the name of menu_main.xml Inflating the menus inside it. */
-        getMenuInflater().inflate(R.menu.menu_main, menu);
+        getMenuInflater().inflate(R.menu.sort_menu, menu);
+        Drawable iconDrawable = new IconicsDrawable(this)
+                .icon(GoogleMaterial.Icon.gmd_sort)
+                .color(Color.DKGRAY)
+                .sizeDp(24);
+        menu.getItem(0).setIcon(iconDrawable);
         return true;
     }
 

@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <ScrollView
     xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/left_drawer"
     android:layout_width="300dp"
     android:layout_height="match_parent"
@@ -32,10 +33,17 @@
             android:layout_height="44dp"
             android:background="@color/colorPrimary"
             android:orientation="horizontal"
+            android:paddingStart="0dp"
             android:paddingEnd="5dp"
-            android:paddingStart="5dp"
             >
-
+            <com.mikepenz.iconics.view.IconicsImageView
+                android:layout_width="44dp"
+                android:layout_height="44dp"
+                android:layout_gravity="center_vertical|end"
+                app:iiv_color="@android:color/darker_gray"
+                app:iiv_icon="gmd_home"
+                app:iiv_size="15dp"
+                />
             <TextView
                 android:layout_width="0dp"
                 android:layout_height="match_parent"
@@ -44,7 +52,6 @@
                 android:gravity="center_vertical"
                 android:text="Home"
                 />
-
         </LinearLayout>
 
         <Space
@@ -70,11 +77,6 @@
                 android:gravity="center_vertical"
                 android:text="Categories"
                 />
-
-            <!-- Date 21/03/2017
-            Incoming: #3014
-            Kendra: Edit Button Beside Folder Categories Section -->
-
         </LinearLayout>
 
         <LinearLayout
@@ -92,8 +94,8 @@
             android:layout_marginStart="5dp"
             android:layout_marginTop="20dp"
             android:layout_weight="1"
-            android:text="Feedora 1.0.0"
             android:textSize="12sp"
+            android:text="Feedora 1.0.0"
             />
 
     </LinearLayout>
