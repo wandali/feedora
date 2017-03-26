@@ -12,10 +12,12 @@ import android.view.LayoutInflater;
 import android.view.View;
 
 class FolderTreeItemHolder extends BaseNodeViewHolder<FolderTreeItemHolder.IconTreeItem> {
-    private IconicsImageView arrowView;
+    private IconicsImageView arrowIcon;
+    private View.OnClickListener clickListener;
 
-    FolderTreeItemHolder(Context context) {
+    FolderTreeItemHolder(Context context, View.OnClickListener clickListener) {
         super(context);
+        this.clickListener = clickListener;
     }
 
     @Override
@@ -32,8 +34,11 @@ class FolderTreeItemHolder extends BaseNodeViewHolder<FolderTreeItemHolder.IconT
         /* Date: 19/04/2017
         Incoming #3010
         Wanda: Get icon view. */
-        arrowView = (IconicsImageView) view.findViewById(R.id.icon);
-        arrowView.setIcon("gmd-keyboard_arrow_down");
+        arrowIcon = (IconicsImageView) view.findViewById(R.id.icon);
+        arrowIcon.setIcon("gmd-keyboard_arrow_down");
+
+        IconicsImageView editIcon = (IconicsImageView) view.findViewById(R.id.editIcon);
+        editIcon.setOnClickListener(clickListener);
 
         return view;
     }
@@ -41,9 +46,9 @@ class FolderTreeItemHolder extends BaseNodeViewHolder<FolderTreeItemHolder.IconT
     @Override
     public void toggle(boolean active) {
         if (active) {
-            arrowView.setIcon("gmd-keyboard_arrow_up");
+            arrowIcon.setIcon("gmd-keyboard_arrow_up");
         } else {
-            arrowView.setIcon("gmd-keyboard_arrow_down");
+            arrowIcon.setIcon("gmd-keyboard_arrow_down");
         }
     }
 

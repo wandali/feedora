@@ -9,9 +9,9 @@ import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteQueryBuilder;
-import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.IBinder;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.ActionBar;
@@ -39,10 +39,6 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.google.android.gms.appindexing.Action;
-import com.google.android.gms.appindexing.AppIndex;
-import com.google.android.gms.appindexing.Thing;
-import com.google.android.gms.common.api.GoogleApiClient;
 import com.sample.foo.simplerssreader.database.DBHelper;
 import com.sample.foo.simplerssreader.database.FeedContract.FeedEntry;
 import com.sample.foo.simplerssreader.database.FolderContract.FolderEntry;
@@ -75,32 +71,24 @@ public class MainActivity extends AppCompatActivity {
     private static final String TAG = "MainActivity";
     private static final String historyFile = "History_Pref";
 
-    private DrawerLayout mDrawerLayout;
     private ActionBarDrawerToggle mToggle;
     private RecyclerView mRecyclerView;
     private AutoCompleteTextView mEditText;
     private ArrayAdapter<String> mAdapter;
     private List<String> mHistoryList;
     private Button mSubscribeButton;
-    private Button mEditButton;
     private SwipeRefreshLayout mSwipeLayout;
     private TextView mFeedTitleTextView;
     private TextView mFeedDescriptionTextView;
     private SharedPreferences sharedPref;
 
     private List<RssFeedModel> mFeedModelList;
+
+    /* Date: 03/26/2017
+    Wanda: Data for a successfully fetched feed. */
     private String mFeedTitle = "";
     private String mFeedDescription = "";
-
-    /* Date 03/22/2017
-    Incoming: #3591
-    Francis: Safe variable copies mFeedTitle. Use this instead and pass it around. */
-    private String titlePass = null;
-
-
-    private LinearLayout mLinearLayout;
-
-    private GoogleApiClient client;
+    private String mFeedUrl = "";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -149,7 +137,6 @@ public class MainActivity extends AppCompatActivity {
         mSwipeLayout = (SwipeRefreshLayout) findViewById(R.id.swipeRefreshLayout);
         mFeedTitleTextView = (TextView) findViewById(R.id.feedTitle);
         mFeedDescriptionTextView = (TextView) findViewById(R.id.feedDescription);
-        mEditButton = (Button) findViewById(R.id.edit);
 
         mHomeButton.setOnClickListener(new View.OnClickListener() {
             /* Date: 13/03/2017
@@ -162,13 +149,9 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-
-
-           /*
-            Date: 22/03/2017
-            Issue: #3591
-            Apurv: Making sure the Subscribe button remains disabled (we only want to enable it unless there is a legitimate link posted)
-        */
+        /* Date: 22/03/2017
+        Issue: #3591
+        Apurv: Making sure the Subscribe button remains disabled (we only want to enable it unless there is a legitimate link posted). */
         mSubscribeButton.setEnabled(false);
         mEditText.addTextChangedListener(new TextWatcher() {
             @Override
@@ -178,12 +161,10 @@ public class MainActivity extends AppCompatActivity {
 
             @Override
             public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
-
             }
 
             @Override
             public void afterTextChanged(Editable editable) {
-
             }
         });
 
@@ -265,26 +246,20 @@ public class MainActivity extends AppCompatActivity {
                 options */
                 popup.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
                     public boolean onMenuItemClick(MenuItem item) {
-                        int id = item.getItemId();
-                        if (id == R.id.Add) {
+                        int folderId = item.getItemId();
+                        if (folderId == R.id.Add) {
                             self.openCreateFolderDialog();
                             return true;
                         } else {
                              /* Date: 19/04/2017
                              Incoming #3010
-                             Wanda: Add a folder to the db. */
-                            final String subscribeUrl = mEditText.getText().toString();
-                            final String urlName = titlePass;
+                             Wanda: Add the feed to the db. */
                             DBHelper mDbHelper = new DBHelper(getApplicationContext());
                             SQLiteDatabase db = mDbHelper.getWritableDatabase();
                             ContentValues feedValues = new ContentValues();
-                            feedValues.put(FeedEntry.URL, subscribeUrl);
-                            feedValues.put(FeedEntry.FOLDER_ID, id);
-                            if (urlName == null) {
-                                feedValues.put(FeedEntry.FEED_TITLE, "null");
-                            } else {
-                                feedValues.put(FeedEntry.FEED_TITLE, urlName);
-                            }
+                            feedValues.put(FeedEntry.URL, mFeedUrl);
+                            feedValues.put(FeedEntry.FEED_TITLE, mFeedTitle);
+                            feedValues.put(FeedEntry.FOLDER_ID, folderId);
                             db.insert(FeedEntry.TABLE_NAME, null, feedValues);
                             self.refreshFolders();
                         }
@@ -295,77 +270,7 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        /* Date: 22/03/2017
-        Incoming: #3014
-        Kendra: Listener for edit button for the folders menu, allows user to edit folders */
-
-        mEditButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                /* Date: 22/03/2017
-                Incoming: #3014
-                Kendra: Inflating the Popup through the xml file, using same menu as subscribe button
-                with create folder option removed*/
-                PopupMenu popup = new PopupMenu(MainActivity.this, mSubscribeButton);
-
-                /* Date: 22/03/2017
-                Incoming: #3014
-                Kendra: Get the folders from db, populate menu */
-                DBHelper mDbHelper = new DBHelper(getApplicationContext());
-                SQLiteDatabase db = mDbHelper.getReadableDatabase();
-                String[] projection = {
-                        FolderEntry._ID,
-                        FolderEntry.TITLE,
-
-                };
-                String sortOrder = FolderEntry.TITLE + " ASC";
-                Cursor cursor = db.query(
-                        FolderEntry.TABLE_NAME,
-                        projection,
-                        null,
-                        null,
-                        null,
-                        null,
-                        sortOrder
-                );
-
-                /* Date: 22/03/2017
-                Incoming #3014
-                Kendra: Push folder items onto the edit folder popup menu. */
-                int folderNameIndex = cursor.getColumnIndexOrThrow(FolderEntry.TITLE);
-                int folderIDIndex = cursor.getColumnIndexOrThrow(FolderEntry._ID);
-                while (cursor.moveToNext()) {
-                    String folderName = cursor.getString(folderNameIndex);
-                    int folderID = cursor.getInt(folderIDIndex);
-                    popup.getMenu().add(Menu.NONE, folderID, Menu.NONE, folderName);
-
-                }
-                cursor.close();
-                /* Date: 22/03/2017
-                Incoming: #3014
-                Kendra: Menu listeners for each folder in the menu */
-                popup.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
-                    public boolean onMenuItemClick(MenuItem item) {
-                        final int folderID = item.getItemId();
-                        if (folderID == R.id.Add) {
-                            self.openCreateFolderDialog();
-                            return true;
-
-                        } else {
-                            self.editFolderDialog(folderID);
-                            return true;
-                        }
-                    }
-                });
-                popup.show();
-
-            }
-        });
         self.refreshFolders();
-
-        // ATTENTION: This was auto-generated to implement the App Indexing API.
-        // See https://g.co/AppIndexing/AndroidStudio for more information.
-        client = new GoogleApiClient.Builder(this).addApi(AppIndex.API).build();
     }
 
     public void refreshFolders() {
@@ -387,15 +292,6 @@ public class MainActivity extends AppCompatActivity {
                         "feeds." + FeedEntry.FOLDER_ID + " = folders." + FolderEntry._ID
         );
 
-        System.out.println(
-                FeedEntry.TABLE_NAME +
-                        " feeds LEFT OUTER JOIN " +
-                        FolderEntry.TABLE_NAME +
-                        " folders ON " +
-                        "feeds." + FeedEntry.FOLDER_ID + " = folders." + FolderEntry._ID
-        );
-
-
         String sortOrder = FolderEntry.TITLE + " ASC";
         Cursor cursor = queryBuilder.query(db, null, null, null, null, null, sortOrder);
 
@@ -415,7 +311,7 @@ public class MainActivity extends AppCompatActivity {
             String feedUrl = cursor.getString(feedUrlIndex);
             String feedTitle = cursor.getString(feedTitleIndex);
 
-            int folderID = cursor.getInt(folderIDIndex);
+            final int folderID = cursor.getInt(folderIDIndex);
 
             /* Date: 22/03/2017
             Incoming #3012
@@ -426,8 +322,18 @@ public class MainActivity extends AppCompatActivity {
                 Incoming: #3010
                 Wanda: Push a new folder if it's a new folderID. */
                 if (folderID != prevFolderId) {
-                    folderNode = new TreeNode(new FolderTreeItemHolder.IconTreeItem(folderName))
-                            .setViewHolder(new FolderTreeItemHolder(context));
+                    FolderTreeItemHolder.IconTreeItem item = new FolderTreeItemHolder.IconTreeItem(folderName);
+                    /* Date: 03/26/2017
+                    Incoming: #3041
+                    Wanda: Set a click listener on the folder that will open the edit/delete dialog. */
+                    View.OnClickListener clickListener = new View.OnClickListener() {
+                        @Override
+                        public void onClick(View view) {
+                            openEditFolderDialog(folderID);
+                        }
+                    };
+                    FolderTreeItemHolder itemHolder = new FolderTreeItemHolder(context, clickListener);
+                    folderNode = new TreeNode(item).setViewHolder(itemHolder);
                     root.addChild(folderNode);
                     prevFolderId = folderID;
                 }
@@ -470,7 +376,7 @@ public class MainActivity extends AppCompatActivity {
     Incoming: #3014
     Kendra: Listener for edit button for the folders menu, allows user to edit folders they created
     Pre: folderID is passed in, which holds the folder info the user has chosen to edit*/
-    public void editFolderDialog(final int folderID) {
+    public void openEditFolderDialog(final int folderID) {
         View viewInflated = LayoutInflater
                 .from(this)
                 .inflate(R.layout.dialog_text_input, (ViewGroup) findViewById(android.R.id.content), false);
@@ -559,11 +465,6 @@ public class MainActivity extends AppCompatActivity {
                             Toast.makeText(MainActivity.this, "Enter a folder name.", Toast.LENGTH_LONG).show();
                             return;
                         }
-                        String feedUrl = mEditText.getText().toString().toLowerCase();
-                        if (feedUrl.length() == 0) {
-                            Toast.makeText(MainActivity.this, "Your feed url cannot be blank.", Toast.LENGTH_LONG).show();
-                            return;
-                        }
 
                         /* Date: 19/04/2017
                         Wanda: Get a writeable database. */
@@ -581,13 +482,9 @@ public class MainActivity extends AppCompatActivity {
                         Incoming #3023
                         Wanda: Add feed to the db. */
                         ContentValues feedValues = new ContentValues();
-                        feedValues.put(FeedEntry.URL, feedUrl);
+                        feedValues.put(FeedEntry.URL, mFeedUrl);
+                        feedValues.put(FeedEntry.FEED_TITLE, mFeedTitle);
                         feedValues.put(FeedEntry.FOLDER_ID, folderID);
-                        if (titlePass == null) {
-                            feedValues.put(FeedEntry.FEED_TITLE, "null");
-                        } else {
-                            feedValues.put(FeedEntry.FEED_TITLE, titlePass);
-                        }
                         db.insert(FeedEntry.TABLE_NAME, null, feedValues);
 
                         /* Date: 19/04/2017
@@ -670,141 +567,148 @@ public class MainActivity extends AppCompatActivity {
     public String innerElementTextOrNull(Element element, String elementName) {
         try {
             return element.select(elementName).first().text();
-        } catch(Exception e) {
+        } catch (Exception e) {
             return null;
         }
     }
 
-    /* Date: 03/25/2017
-    Incoming: #3334
-    Wanda: Re-wrote parseFeed method to be less complex and error prone. */
-    public List<RssFeedModel> parseFeed(InputStream inputStream) throws XmlPullParserException, IOException {
-        Document doc = Jsoup.parse(inputStream, null, "", Parser.xmlParser());
-        mFeedTitle = doc.select("rss channel title").first().text();
-        mFeedTitle = innerElementTextOrNull(doc, "rss channel title");
-        mFeedDescription = innerElementTextOrNull(doc, "rss channel description");
-
-        Elements articles = doc.select("rss channel item");
-        List<RssFeedModel> items = new ArrayList<>();
-        DateFormat articleDateFormatter = new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss zzz", Locale.getDefault());
-        for (Element article : articles) {
-            final String title = innerElementTextOrNull(article, "title");
-
-            final String link = innerElementTextOrNull(article, "link");
-
-            final String description = innerElementTextOrNull(article, "description");
-
-            String author;
-            author = innerElementTextOrNull(article, "dc|creator");
-            /* Date: 03/25/2017
-            Incoming: #3334
-            Wanda: If we didn't get an author from dc:creator try the author element. */
-            if (author == null) author = innerElementTextOrNull(article, "author");
-
-            String thumbUrl;
-            try {
-                thumbUrl = article.select("media|thumbnail").first().attr("url");
-            } catch (Exception e) {
-                thumbUrl = null;
-            }
-            /* Date: 03/25/2017
-            Incoming: #3765
-            Wanda: If we don't have an image try to pull one from the description html. */
-            if (thumbUrl == null) {
-                try {
-                    final String rawDescription = article.select("description").text();
-                    Document parsedDescription = Jsoup.parse(rawDescription);
-                    thumbUrl = parsedDescription.select("img").attr("src");
-                } catch (Exception e) {
-                    thumbUrl = null;
-                }
-            }
-
-            Date date;
-            try {
-                final String dateText = article.select("pubdate").text();
-                date = articleDateFormatter.parse(dateText);
-            } catch (ParseException e) {
-                date = new Date(Long.MIN_VALUE);
-            }
-
-            RssFeedModel item = new RssFeedModel(title, link, description, thumbUrl, author, date);
-            items.add(item);
-        }
-        inputStream.close();
-        return items;
-    }
-
     /* Date: 03/22/2017
-    * Joline: Uses shared preferences to get the saved hisory from another instance of the app*/
-    public void getHistory(){
+    * Joline: Uses shared preferences to get the saved history from another instance of the app*/
+    public void getHistory() {
         sharedPref = getSharedPreferences(historyFile, 0);
         int size = sharedPref.getInt("list_size", 0);
-        for(int i = 0; i < size; i++)
-            mHistoryList.add(sharedPref.getString("url_"+i,null));
+        for (int i = 0; i < size; i++)
+            mHistoryList.add(sharedPref.getString("url_" + i, null));
     }
+
     /*Date: 03/22/2017
     * Joline: saves the users url list via shared preferences*/
-    public void setHistory(){
+    public void setHistory() {
         sharedPref = getSharedPreferences(historyFile, 0);
         SharedPreferences.Editor editor = sharedPref.edit();
         int size = mHistoryList.size();
         editor.putInt("list_size", size);
-        for(int i = 0; i < size; i++)
-            editor.putString("url_"+ i, mHistoryList.get(i));
+        for (int i = 0; i < size; i++)
+            editor.putString("url_" + i, mHistoryList.get(i));
         editor.apply();
     }
 
-    public Action getIndexApiAction() {
-        Thing object = new Thing.Builder()
-                .setName("Main Page") // TODO: Define a title for the content shown.
-                // TODO: Make sure this auto-generated URL is correct.
-                .setUrl(Uri.parse("http://[ENTER-YOUR-URL-HERE]"))
-                .build();
-        return new Action.Builder(Action.TYPE_VIEW)
-                .setObject(object)
-                .setActionStatus(Action.STATUS_TYPE_COMPLETED)
-                .build();
+    private void updateFeedDetails() {
+        mFeedTitleTextView.setText("Feed Title: " + mFeedTitle);
+        mFeedDescriptionTextView.setText("Feed Description: " + mFeedDescription);
     }
 
-    @Override
-    public void onStart() {
-        super.onStart();
-        client.connect();
-        AppIndex.AppIndexApi.start(client, getIndexApiAction());
+    private void clearFeedDetails() {
+        mFeedTitle = "";
+        mFeedDescription = "";
+        mFeedUrl = "";
+        updateFeedDetails();
     }
 
     @Override
     public void onStop() {
         super.onStop();
-
-        AppIndex.AppIndexApi.end(client, getIndexApiAction());
         setHistory();
+    }
 
-        client.disconnect();
+    /* Date: 16/03/2017
+    Joline: This function updates the adapter and history list by adding the
+    most recent accepted url submitted by the user. Shows the most recent url first. */
+    void addFeedToHistory(String feedURL) {
+        if (!mHistoryList.contains(feedURL)) {
+            if (mHistoryList.size() == 5) {
+                mHistoryList.remove(4);
+            }
+            mHistoryList.add(0, feedURL);
+            mAdapter.clear();
+            mAdapter.addAll(mHistoryList);
+            mAdapter.notifyDataSetChanged();
+        }
     }
 
     private class FetchFeedTask extends AsyncTask<Void, Void, Boolean> {
 
-        private String urlLink;
+        private String feedTitle;
+        private String feedURL;
+        private String feedDescription;
 
         @Override
         protected void onPreExecute() {
+            /* Date: 03/26/2017
+            Wanda: Set the layout state to refreshing. */
             mSwipeLayout.setRefreshing(true);
-            if (!mEditText.getText().toString().matches("")) {
-                mFeedTitle = "";
-                mFeedDescription = "";
-                titlePass = null;
+
+            /* Date: 03/26/2017
+            Wanda: Reset UI. */
+            clearFeedDetails();
+
+            /* Date: 03/26/2017
+            Wanda: Get the feed url from the text input. */
+            feedURL = mEditText.getText().toString().toLowerCase();
+        }
+
+        /* Date: 03/25/2017
+        Incoming: #3334
+        Wanda: Re-wrote parseFeed method to be less complex and error prone. */
+        List<RssFeedModel> parseFeed(InputStream inputStream) throws XmlPullParserException, IOException {
+            Document doc = Jsoup.parse(inputStream, null, "", Parser.xmlParser());
+            feedTitle = innerElementTextOrNull(doc, "rss channel title");
+            feedDescription = innerElementTextOrNull(doc, "rss channel description");
+
+            Elements articles = doc.select("rss channel item");
+            List<RssFeedModel> items = new ArrayList<>();
+            DateFormat articleDateFormatter = new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss zzz", Locale.getDefault());
+            for (Element article : articles) {
+                final String title = innerElementTextOrNull(article, "title");
+
+                final String link = innerElementTextOrNull(article, "link");
+
+                final String description = innerElementTextOrNull(article, "description");
+
+                String author;
+                author = innerElementTextOrNull(article, "dc|creator");
+                /* Date: 03/25/2017
+                Incoming: #3334
+                Wanda: If we didn't get an author from dc:creator try the author element. */
+                if (author == null) author = innerElementTextOrNull(article, "author");
+
+                String thumbUrl;
+                try {
+                    thumbUrl = article.select("media|thumbnail").first().attr("url");
+                } catch (Exception e) {
+                    thumbUrl = null;
+                }
+            /* Date: 03/25/2017
+            Incoming: #3765
+            Wanda: If we don't have an image try to pull one from the description html. */
+                if (thumbUrl == null) {
+                    try {
+                        final String rawDescription = article.select("description").text();
+                        Document parsedDescription = Jsoup.parse(rawDescription);
+                        thumbUrl = parsedDescription.select("img").attr("src");
+                    } catch (Exception e) {
+                        thumbUrl = null;
+                    }
+                }
+
+                Date date;
+                try {
+                    final String dateText = article.select("pubdate").text();
+                    date = articleDateFormatter.parse(dateText);
+                } catch (ParseException e) {
+                    date = new Date(Long.MIN_VALUE);
+                }
+
+                RssFeedModel item = new RssFeedModel(title, link, description, thumbUrl, author, date);
+                items.add(item);
             }
-            mFeedTitleTextView.setText("Feed Title: " + mFeedTitle);
-            mFeedDescriptionTextView.setText("Feed Description: " + mFeedDescription);
-            urlLink = mEditText.getText().toString().toLowerCase();
+            inputStream.close();
+            return items;
         }
 
         @Override
         protected Boolean doInBackground(Void... voids) {
-            if (TextUtils.isEmpty(urlLink))
-                return false;
+            if (TextUtils.isEmpty(feedURL)) return false;
 
             /* Date: 16/02/2017
             Wanda: If the URL entered does not have an http or https and/or www. associated with it,
@@ -812,13 +716,13 @@ public class MainActivity extends AppCompatActivity {
             not get displayed as invalid RSS feed url */
             try {
                 InputStream stream = null;
-                Boolean hasNoProtocol = !urlLink.startsWith("http://") && !urlLink.startsWith("https://");
+                Boolean hasNoProtocol = !feedURL.startsWith("http://") && !feedURL.startsWith("https://");
                 if (hasNoProtocol) {
                     ArrayList<URL> possibleUrls = new ArrayList<>(Arrays.asList(
-                            new URL("https://" + urlLink),
-                            new URL("https://www." + urlLink),
-                            new URL("http://" + urlLink),
-                            new URL("http://www." + urlLink)));
+                            new URL("https://" + feedURL),
+                            new URL("https://www." + feedURL),
+                            new URL("http://" + feedURL),
+                            new URL("http://www." + feedURL)));
                     for (URL url : possibleUrls) {
                         try {
                             URLConnection connection = url.openConnection();
@@ -832,12 +736,11 @@ public class MainActivity extends AppCompatActivity {
                         }
                     }
                 } else {
-                    URL url = new URL(urlLink);
+                    URL url = new URL(feedURL);
                     stream = url.openConnection().getInputStream();
                 }
                 if (stream == null) throw new IOException();
                 mFeedModelList = parseFeed(stream);
-                updateHistory(urlLink);
                 return true;
             } catch (IOException | XmlPullParserException e) {
                 Log.e(TAG, "Error", e);
@@ -846,38 +749,38 @@ public class MainActivity extends AppCompatActivity {
             return false;
         }
 
-        /* Date: 16/03/2017
-        * Joline: This function updates the adapter and history list by adding the
-        * most recent accepted url submitted by the user. Shows the most recent url first*/
-        public void updateHistory(String feedURL) {
-            if (!mHistoryList.contains(feedURL)) {
-                if (mHistoryList.size() == 5) {
-                    mHistoryList.remove(4);
-                }
-                mHistoryList.add(0, feedURL);
-                mAdapter.clear();
-                mAdapter.addAll(mHistoryList);
-                mAdapter.notifyDataSetChanged();
-            }
-        }
-
         @Override
         protected void onPostExecute(Boolean success) {
+            /* Date: 03/26/2017
+            Wanda: Done refreshing. */
             mSwipeLayout.setRefreshing(false);
+
+            /* Date: 03/26/2017
+            Wanda: Hide keyboard. */
             InputMethodManager inputMethodManager = (InputMethodManager) getSystemService(INPUT_METHOD_SERVICE);
-            inputMethodManager.hideSoftInputFromWindow(getCurrentFocus().getWindowToken(), InputMethodManager.HIDE_NOT_ALWAYS);
+            View focusedView = getCurrentFocus();
+            if (focusedView != null) {
+                IBinder binder = focusedView.getWindowToken();
+                inputMethodManager.hideSoftInputFromWindow(binder, InputMethodManager.HIDE_NOT_ALWAYS);
+            }
+
             if (success) {
-                mFeedTitleTextView.setText("Feed Title: " + mFeedTitle);
-                mFeedDescriptionTextView.setText("Feed Description: " + mFeedDescription);
+                /* Date: 03/26/2017
+                Wanda: Commit changes to the UI. */
+                mFeedTitle = feedTitle;
+                mFeedUrl = feedURL;
+                mFeedDescription = feedDescription;
+                updateFeedDetails();
+
                 mRecyclerView.setAdapter(new RssFeedListAdapter(mFeedModelList));
+                addFeedToHistory(feedURL);
+
                 /* Date: 22/03/2017
                 Issue: #3591
                 Apurv: Making sure the Subscribe button is enabled since we found proper link */
                 mSubscribeButton.setEnabled(true);
             } else {
-                Toast.makeText(MainActivity.this,
-                        "Enter a Valid RSS Feed URL",
-                        Toast.LENGTH_LONG).show();
+                Toast.makeText(MainActivity.this, "Enter a Valid RSS Feed URL", Toast.LENGTH_LONG).show();
             }
         }
     }

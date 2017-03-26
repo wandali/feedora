@@ -24,16 +24,15 @@ Wanda: indicates how folders are displayed in the sidebar-->
         android:layout_gravity="fill_horizontal|start|end"
         android:background="?android:attr/selectableItemBackground"
         android:orientation="horizontal"
-        android:paddingEnd="5dp"
-        android:paddingStart="5dp"
         >
 
         <com.mikepenz.iconics.view.IconicsImageView
             android:id="@+id/icon"
-            android:layout_width="10dp"
-            android:layout_height="10dp"
+            android:layout_width="44dp"
+            android:layout_height="44dp"
             android:layout_gravity="center_vertical"
             app:iiv_color="@android:color/darker_gray"
+            app:iiv_size="10dp"
             />
 
         <TextView
@@ -43,7 +42,20 @@ Wanda: indicates how folders are displayed in the sidebar-->
             android:layout_gravity="center_vertical|fill_horizontal"
             android:layout_marginStart="5dp"
             android:layout_weight="1"
+            android:ellipsize="end"
+            android:maxLines="1"
             android:text="Dummy Text"
+            />
+
+        <com.mikepenz.iconics.view.IconicsImageView
+            android:id="@+id/editIcon"
+            android:layout_width="44dp"
+            android:layout_height="44dp"
+            android:layout_gravity="center_vertical|end"
+            android:clickable="true"
+            app:iiv_color="@android:color/darker_gray"
+            app:iiv_icon="gmd-mode_edit"
+            app:iiv_size="10dp"
             />
     </LinearLayout>
 </RelativeLayout>
