@@ -428,10 +428,18 @@ public class MainActivity extends AppCompatActivity {
                                 /* Date: 22/03/2017
                                 Incoming: #3012
                                 Kendra: Based on folderID, delete the current folder user has clicked */
+                                String [] arguments = new String[]{String.valueOf(folderID)};
                                 db.delete(
                                         FolderEntry.TABLE_NAME,
                                         "_id = ?",
-                                        new String[]{String.valueOf(folderID)});
+                                        arguments);
+                                /* Date: 26/03/2017
+                                Incoming: #3722
+                                Wanda: Also delete feeds with this folder id. */
+                                db.delete(
+                                        FeedEntry.TABLE_NAME,
+                                        FeedEntry.FOLDER_ID + "=?",
+                                        arguments);
                                 self.refreshFolders();
 
                             }
@@ -652,6 +660,8 @@ public class MainActivity extends AppCompatActivity {
         Wanda: Re-wrote parseFeed method to be less complex and error prone. */
         List<RssFeedModel> parseFeed(InputStream inputStream) throws XmlPullParserException, IOException {
             Document doc = Jsoup.parse(inputStream, null, "", Parser.xmlParser());
+            Element rssElement = doc.select("rss").first();
+            if (rssElement == null) throw new XmlPullParserException("Could not find an rss element.");
             feedTitle = innerElementTextOrNull(doc, "rss channel title");
             feedDescription = innerElementTextOrNull(doc, "rss channel description");
 
@@ -744,7 +754,7 @@ public class MainActivity extends AppCompatActivity {
                 return true;
             } catch (IOException | XmlPullParserException e) {
                 Log.e(TAG, "Error", e);
-                mFeedModelList.clear();
+                if (mFeedModelList != null) mFeedModelList.clear();
             }
             return false;
         }
