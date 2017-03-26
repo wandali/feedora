@@ -5,10 +5,10 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteQueryBuilder;
-import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -24,7 +24,6 @@ import android.text.Editable;
 import android.text.TextUtils;
 import android.text.TextWatcher;
 import android.util.Log;
-import android.util.Xml;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -40,18 +39,21 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.google.android.gms.appindexing.Action;
+import com.google.android.gms.appindexing.AppIndex;
+import com.google.android.gms.appindexing.Thing;
+import com.google.android.gms.common.api.GoogleApiClient;
 import com.sample.foo.simplerssreader.database.DBHelper;
 import com.sample.foo.simplerssreader.database.FeedContract.FeedEntry;
 import com.sample.foo.simplerssreader.database.FolderContract.FolderEntry;
 import com.unnamed.b.atv.model.TreeNode;
 import com.unnamed.b.atv.view.AndroidTreeView;
 
-import com.google.android.gms.appindexing.Action;
-import com.google.android.gms.appindexing.AppIndex;
-import com.google.android.gms.appindexing.Thing;
-import com.google.android.gms.common.api.GoogleApiClient;
-
-import org.xmlpull.v1.XmlPullParser;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+import org.jsoup.parser.Parser;
+import org.jsoup.select.Elements;
 import org.xmlpull.v1.XmlPullParserException;
 
 import java.io.IOException;
@@ -66,6 +68,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -96,10 +99,7 @@ public class MainActivity extends AppCompatActivity {
 
 
     private LinearLayout mLinearLayout;
-    /**
-     * ATTENTION: This was auto-generated to implement the App Indexing API.
-     * See https://g.co/AppIndexing/AndroidStudio for more information.
-     */
+
     private GoogleApiClient client;
 
     @Override
@@ -667,143 +667,75 @@ public class MainActivity extends AppCompatActivity {
         return super.onOptionsItemSelected(item);
     }
 
-    public List<RssFeedModel> parseFeed(InputStream inputStream) throws XmlPullParserException, IOException {
-        String title = null;
-        String link = null;
-        String description = null;
-        String thumbUrl = null;
-        String author = null;
-        Date date = new Date(Long.MIN_VALUE);
-
-        boolean isItem = false;
-        boolean endItem = false;
-        boolean isStart = true;
-        int numTitle = 0;
-        List<RssFeedModel> items = new ArrayList<>();
-        List<String> artTitles = new ArrayList<>();
-
+    public String innerElementTextOrNull(Element element, String elementName) {
         try {
-            XmlPullParser xmlPullParser = Xml.newPullParser();
-            xmlPullParser.setFeature(XmlPullParser.FEATURE_PROCESS_NAMESPACES, false);
-            xmlPullParser.setInput(inputStream, null);
+            return element.select(elementName).first().text();
+        } catch(Exception e) {
+            return null;
+        }
+    }
 
-            xmlPullParser.nextTag();
-            while (xmlPullParser.next() != XmlPullParser.END_DOCUMENT) {
-                int eventType = xmlPullParser.getEventType();
+    /* Date: 03/25/2017
+    Incoming: #3334
+    Wanda: Re-wrote parseFeed method to be less complex and error prone. */
+    public List<RssFeedModel> parseFeed(InputStream inputStream) throws XmlPullParserException, IOException {
+        Document doc = Jsoup.parse(inputStream, null, "", Parser.xmlParser());
+        mFeedTitle = doc.select("rss channel title").first().text();
+        mFeedTitle = innerElementTextOrNull(doc, "rss channel title");
+        mFeedDescription = innerElementTextOrNull(doc, "rss channel description");
 
-                String name = xmlPullParser.getName();
-                if (name == null)
-                    continue;
+        Elements articles = doc.select("rss channel item");
+        List<RssFeedModel> items = new ArrayList<>();
+        DateFormat articleDateFormatter = new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss zzz", Locale.getDefault());
+        for (Element article : articles) {
+            final String title = innerElementTextOrNull(article, "title");
 
-                if (eventType == XmlPullParser.END_TAG) {
-                    if (name.equalsIgnoreCase("item")) {
-                        isItem = false;
-                        endItem = true;
-                    }
-                    continue;
-                }
-                if (eventType == XmlPullParser.START_TAG) {
-                    if (name.equalsIgnoreCase("item")) {
-                        isItem = true;
-                        continue;
-                    }
-                }
+            final String link = innerElementTextOrNull(article, "link");
 
-                String result = "";
-                if (xmlPullParser.next() == XmlPullParser.TEXT) {
-                    result = xmlPullParser.getText();
-                    xmlPullParser.nextTag();
-                }
+            final String description = innerElementTextOrNull(article, "description");
 
-                name = name.toLowerCase();
-                switch (name) {
-                    case "title":
-                        title = result;
-                        artTitles.add(title);
-                        numTitle++;
-                        break;
-                    case "link":
-                        link = result;
-                        break;
-                    case "description":
-                        description = result;
-                        break;
-                    /* Date: 16/02/2017
-                    Wanda: grabs the attribute of the url*/
-                    case "media:thumbnail":
-                        thumbUrl = xmlPullParser.getAttributeValue(null, "url");
-                        break;
-                    /* Date: 08/03/2017
-                    Incoming #3008
-                    Jack: grabs the author name */
-                    case "dc:creator":
-                        author = result;
-                        break;
-                    /* Date: 08/03/2017
-                    Incoming #3007
-                    Jack: grabs and parses the date */
-                    case "pubdate":
-                        DateFormat formatter = new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss zzz");
-                        try {
+            String author;
+            author = innerElementTextOrNull(article, "dc|creator");
+            /* Date: 03/25/2017
+            Incoming: #3334
+            Wanda: If we didn't get an author from dc:creator try the author element. */
+            if (author == null) author = innerElementTextOrNull(article, "author");
 
-                            date = formatter.parse(result);
-                        } catch (ParseException e) {
-                            date = new Date(Long.MIN_VALUE);
-                        }
-                        break;
-                }
-
-                if (isStart && isItem) {
-                    if (numTitle > 1) {
-                        title = artTitles.get(0);
-                        numTitle = 0;
-                    } else if (numTitle == artTitles.size()) {
-                        title = "";
-                    } else {
-                        Log.e(TAG, "ERROR: PARSING FEED TITLE");
-                    }
-                    mFeedTitle = title;
-                    titlePass = title;
-                    mFeedDescription = description;
-                    isStart = false;
-                    title = null;
-                    link = null;
-                    description = null;
-                }
-
-                if (title != null && link != null && description != null && endItem) {
-                    if (isItem) {
-                        if (numTitle == artTitles.size()) {
-                            title = artTitles.get(numTitle - 2);
-                        } else {
-                            title = artTitles.get(numTitle);
-                        }
-                        //Log.d("MainActivity",title+ " " + link + " "+ description + " " + thumbUrl);
-                        /* Date: 08/03/2017
-                        Jack: Added more parameters for creating a new item */
-                        RssFeedModel item = new RssFeedModel(title, link, description, thumbUrl, author, date);
-                        items.add(item);
-                    } else {
-                        mFeedTitle = title;
-                        titlePass = title;
-                        mFeedDescription = description;
-                    }
-
-                    title = null;
-                    link = null;
-                    description = null;
+            String thumbUrl;
+            try {
+                thumbUrl = article.select("media|thumbnail").first().attr("url");
+            } catch (Exception e) {
+                thumbUrl = null;
+            }
+            /* Date: 03/25/2017
+            Incoming: #3765
+            Wanda: If we don't have an image try to pull one from the description html. */
+            if (thumbUrl == null) {
+                try {
+                    final String rawDescription = article.select("description").text();
+                    Document parsedDescription = Jsoup.parse(rawDescription);
+                    thumbUrl = parsedDescription.select("img").attr("src");
+                } catch (Exception e) {
                     thumbUrl = null;
-                    isItem = false;
-                    endItem = false;
                 }
             }
 
-            return items;
-        } finally {
-            inputStream.close();
+            Date date;
+            try {
+                final String dateText = article.select("pubdate").text();
+                date = articleDateFormatter.parse(dateText);
+            } catch (ParseException e) {
+                date = new Date(Long.MIN_VALUE);
+            }
+
+            RssFeedModel item = new RssFeedModel(title, link, description, thumbUrl, author, date);
+            items.add(item);
         }
+        inputStream.close();
+        return items;
     }
-    /*Date: 03/22/2017
+
+    /* Date: 03/22/2017
     * Joline: Uses shared preferences to get the saved hisory from another instance of the app*/
     public void getHistory(){
         sharedPref = getSharedPreferences(historyFile, 0);
@@ -823,10 +755,6 @@ public class MainActivity extends AppCompatActivity {
         editor.apply();
     }
 
-    /**
-     * ATTENTION: This was auto-generated to implement the App Indexing API.
-     * See https://g.co/AppIndexing/AndroidStudio for more information.
-     */
     public Action getIndexApiAction() {
         Thing object = new Thing.Builder()
                 .setName("Main Page") // TODO: Define a title for the content shown.
@@ -842,9 +770,6 @@ public class MainActivity extends AppCompatActivity {
     @Override
     public void onStart() {
         super.onStart();
-
-        // ATTENTION: This was auto-generated to implement the App Indexing API.
-        // See https://g.co/AppIndexing/AndroidStudio for more information.
         client.connect();
         AppIndex.AppIndexApi.start(client, getIndexApiAction());
     }
@@ -853,8 +778,6 @@ public class MainActivity extends AppCompatActivity {
     public void onStop() {
         super.onStop();
 
-        // ATTENTION: This was auto-generated to implement the App Indexing API.
-        // See https://g.co/AppIndexing/AndroidStudio for more information.
         AppIndex.AppIndexApi.end(client, getIndexApiAction());
         setHistory();
 
@@ -923,7 +846,7 @@ public class MainActivity extends AppCompatActivity {
             return false;
         }
 
-        /*Date: 16/03/2017
+        /* Date: 16/03/2017
         * Joline: This function updates the adapter and history list by adding the
         * most recent accepted url submitted by the user. Shows the most recent url first*/
         public void updateHistory(String feedURL) {
