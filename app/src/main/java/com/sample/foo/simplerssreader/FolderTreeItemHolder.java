@@ -59,4 +59,9 @@ class FolderTreeItemHolder extends BaseNodeViewHolder<FolderTreeItemHolder.IconT
             this.text = text;
         }
     }
+
+    @Override
+    public int getContainerStyle() {
+        return R.style.FeedContainerStyle;
+    }
 }

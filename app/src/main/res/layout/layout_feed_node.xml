@@ -3,6 +3,7 @@
 <!-- Date: 19/03/2017
 Incoming #3023
 Wanda: indicates how feeds are displayed in the sidebar-->
+
 <RelativeLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
@@ -20,7 +21,7 @@ Wanda: indicates how feeds are displayed in the sidebar-->
         android:background="?android:attr/selectableItemBackground"
         android:orientation="horizontal"
         android:paddingEnd="5dp"
-        android:paddingStart="64dp"
+        android:paddingStart="0dp"
         >
 
         <TextView
@@ -28,7 +29,6 @@ Wanda: indicates how feeds are displayed in the sidebar-->
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_gravity="center_vertical|fill_horizontal"
-            android:layout_marginStart="5dp"
             android:layout_weight="1"
             android:ellipsize="end"
             android:maxLines="1"
