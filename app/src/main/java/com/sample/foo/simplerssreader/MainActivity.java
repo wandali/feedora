@@ -96,10 +96,7 @@ public class MainActivity extends AppCompatActivity {
 
 
     private LinearLayout mLinearLayout;
-    /**
-     * ATTENTION: This was auto-generated to implement the App Indexing API.
-     * See https://g.co/AppIndexing/AndroidStudio for more information.
-     */
+
     private GoogleApiClient client;
 
     @Override
@@ -823,10 +820,6 @@ public class MainActivity extends AppCompatActivity {
         editor.apply();
     }
 
-    /**
-     * ATTENTION: This was auto-generated to implement the App Indexing API.
-     * See https://g.co/AppIndexing/AndroidStudio for more information.
-     */
     public Action getIndexApiAction() {
         Thing object = new Thing.Builder()
                 .setName("Main Page") // TODO: Define a title for the content shown.
@@ -842,9 +835,6 @@ public class MainActivity extends AppCompatActivity {
     @Override
     public void onStart() {
         super.onStart();
-
-        // ATTENTION: This was auto-generated to implement the App Indexing API.
-        // See https://g.co/AppIndexing/AndroidStudio for more information.
         client.connect();
         AppIndex.AppIndexApi.start(client, getIndexApiAction());
     }
@@ -853,8 +843,6 @@ public class MainActivity extends AppCompatActivity {
     public void onStop() {
         super.onStop();
 
-        // ATTENTION: This was auto-generated to implement the App Indexing API.
-        // See https://g.co/AppIndexing/AndroidStudio for more information.
         AppIndex.AppIndexApi.end(client, getIndexApiAction());
         setHistory();
 
