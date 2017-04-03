@@ -10,6 +10,8 @@ import com.unnamed.b.atv.model.TreeNode;
 import com.unnamed.b.atv.model.TreeNode.BaseNodeViewHolder;
 
 class FeedTreeItemHolder extends BaseNodeViewHolder<FeedTreeItemHolder.IconTreeItem> {
+
+
     FeedTreeItemHolder(Context context) {
         super(context);
     }
@@ -24,6 +26,7 @@ class FeedTreeItemHolder extends BaseNodeViewHolder<FeedTreeItemHolder.IconTreeI
         Wanda: Set text. */
         TextView textView = (TextView) view.findViewById(R.id.textView);
         textView.setText(value.text);
+
 
         return view;
     }

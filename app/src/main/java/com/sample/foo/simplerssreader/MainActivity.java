@@ -31,6 +31,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.View.OnClickListener;
 import android.view.ViewGroup;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.ArrayAdapter;
@@ -312,8 +313,8 @@ public class MainActivity extends AppCompatActivity {
         TreeNode folderNode = null;
         while (cursor.moveToNext()) {
             String folderName = cursor.getString(folderNameIndex);
-            String feedUrl = cursor.getString(feedUrlIndex);
-            String feedTitle = cursor.getString(feedTitleIndex);
+            final String feedUrl = cursor.getString(feedUrlIndex);
+            final String feedTitle = cursor.getString(feedTitleIndex);
 
             final int folderID = cursor.getInt(folderIDIndex);
 
@@ -342,15 +343,28 @@ public class MainActivity extends AppCompatActivity {
                     prevFolderId = folderID;
                 }
 
-
                 /* Date: 19/04/2017
                 Incoming #3023
                 Wanda: Push the feed onto the folder. */
                 if (feedUrl != null) {
-                    /* Date 03/22/2017
-                    Incoming: #3591 Sending the feed title instead of the url to the folders. */
+
                     TreeNode feedNode = new TreeNode(new FeedTreeItemHolder.IconTreeItem(feedTitle))
                             .setViewHolder(new FeedTreeItemHolder(this));
+                    /* Date 04/02/2017
+                    Incoming #3017
+                    Kendra: On a long click, user can delete a feed from under a folder */
+                    feedNode.setLongClickListener(new TreeNode.TreeNodeLongClickListener() {
+                        @Override
+                        public boolean onLongClick(TreeNode feedNode, Object object) {
+                            Toast.makeText(MainActivity.this, feedUrl, Toast.LENGTH_LONG).show();
+                            /* Date 04/02/2017
+                            Incoming #3017
+                            Kendra: Send selected folder and feedURL information to method for deletion of feed. */
+                            openFeedDeleteDialog(folderID, feedUrl);
+                            return true;
+                        }
+                    });
+
                     assert folderNode != null;
                     folderNode.addChildren(feedNode);
                 }
@@ -376,6 +390,43 @@ public class MainActivity extends AppCompatActivity {
         homeIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
         startActivity(homeIntent);
 
+    }
+
+
+    /* Date: 22/03/2017
+    Incoming: #3014
+    Kendra: Opens a dialog that asks if user wants to delete a selected feed,
+    if they click OK feed will be removed from database*/
+    public void openFeedDeleteDialog(final int folderID, final String FeedUrl) {
+        final MainActivity self = this;
+        new AlertDialog.Builder(this)
+                .setTitle("Are you sure you want to delete this feed?")
+                .setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int whichButton) {
+                        Toast.makeText(MainActivity.this, "Deleted feed.", Toast.LENGTH_LONG).show();
+
+                        DBHelper mDbHelper = new DBHelper(getApplicationContext());
+                        SQLiteDatabase db = mDbHelper.getReadableDatabase();
+
+                        /* Date: 22/03/2017
+                        Incoming: #3014
+                        Kendra: Delete feed from db based on which folderID and feedURL was selected */
+                        String[] whereArguments = new String[]{String.valueOf(folderID), FeedUrl};
+                        db.delete(
+                                FeedEntry.TABLE_NAME,
+                                FeedEntry.FOLDER_ID + "=? and " + FeedEntry.URL + "=?",
+                                whereArguments);
+
+                        self.refreshFolders();
+                    }
+                })
+                .setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int whichButton) {
+
+                    }
+                })
+                .show();
+        self.refreshFolders();
     }
 
     /* Date: 22/03/2017
@@ -434,7 +485,7 @@ public class MainActivity extends AppCompatActivity {
                                 /* Date: 22/03/2017
                                 Incoming: #3012
                                 Kendra: Based on folderID, delete the current folder user has clicked */
-                                String [] arguments = new String[]{String.valueOf(folderID)};
+                                String[] arguments = new String[]{String.valueOf(folderID)};
                                 db.delete(
                                         FolderEntry.TABLE_NAME,
                                         "_id = ?",
@@ -672,7 +723,8 @@ public class MainActivity extends AppCompatActivity {
         List<RssFeedModel> parseFeed(InputStream inputStream) throws XmlPullParserException, IOException {
             Document doc = Jsoup.parse(inputStream, null, "", Parser.xmlParser());
             Element rssElement = doc.select("rss").first();
-            if (rssElement == null) throw new XmlPullParserException("Could not find an rss element.");
+            if (rssElement == null)
+                throw new XmlPullParserException("Could not find an rss element.");
             feedTitle = innerElementTextOrNull(doc, "rss channel title");
             feedDescription = innerElementTextOrNull(doc, "rss channel description");
 
