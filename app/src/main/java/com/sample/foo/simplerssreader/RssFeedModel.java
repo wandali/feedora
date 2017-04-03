@@ -1,6 +1,8 @@
 package com.sample.foo.simplerssreader;
 
 import android.net.Uri;
+import android.util.Log;
+import java.net.URL;
 
 import com.google.common.base.CharMatcher;
 
@@ -53,6 +55,7 @@ class RssFeedModel {
     RssFeedModel(String title, String link, String description, String thumbnailUri, String author, Date date) {
         this.title = this.parseTitle(title);
         this.link = link;
+        Log.d("insert string", "inserting string" + Uri.parse(thumbnailUri));
         this.author = author;
         this.date = date;
         if (description != null) this.description = this.parseDescription(description);

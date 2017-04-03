@@ -39,8 +39,10 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.ImageView;
 import android.widget.Toast;
 
+import com.bumptech.glide.Glide;
 import com.mikepenz.google_material_typeface_library.GoogleMaterial;
 import com.mikepenz.iconics.IconicsDrawable;
 import com.sample.foo.simplerssreader.database.DBHelper;
@@ -53,11 +55,13 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.parser.Parser;
+import org.jsoup.parser.Tag;
 import org.jsoup.select.Elements;
 import org.xmlpull.v1.XmlPullParserException;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
 import java.text.DateFormat;
@@ -141,6 +145,7 @@ public class MainActivity extends AppCompatActivity {
         mSwipeLayout = (SwipeRefreshLayout) findViewById(R.id.swipeRefreshLayout);
         mFeedTitleTextView = (TextView) findViewById(R.id.feedTitle);
         mFeedDescriptionTextView = (TextView) findViewById(R.id.feedDescription);
+        //mFeedUrl = (ImageView) findViewById(R.id.favicon);
 
         mHomeButton.setOnClickListener(new View.OnClickListener() {
             /* Date: 13/03/2017
@@ -307,6 +312,7 @@ public class MainActivity extends AppCompatActivity {
         int feedUrlIndex = cursor.getColumnIndex(FeedEntry.URL);
         int feedTitleIndex = cursor.getColumnIndex(FeedEntry.FEED_TITLE);
         int prevFolderId = -1;
+        String urlToLoad;
         TreeNode root = TreeNode.root();
         Context context = this;
         TreeNode folderNode = null;
@@ -314,6 +320,7 @@ public class MainActivity extends AppCompatActivity {
             String folderName = cursor.getString(folderNameIndex);
             String feedUrl = cursor.getString(feedUrlIndex);
             String feedTitle = cursor.getString(feedTitleIndex);
+
 
             final int folderID = cursor.getInt(folderIDIndex);
 
@@ -349,7 +356,7 @@ public class MainActivity extends AppCompatActivity {
                 if (feedUrl != null) {
                     /* Date 03/22/2017
                     Incoming: #3591 Sending the feed title instead of the url to the folders. */
-                    TreeNode feedNode = new TreeNode(new FeedTreeItemHolder.IconTreeItem(feedTitle))
+                    TreeNode feedNode = new TreeNode(new FeedTreeItemHolder.IconTreeItem(feedTitle, feedUrl))
                             .setViewHolder(new FeedTreeItemHolder(this));
                     assert folderNode != null;
                     folderNode.addChildren(feedNode);
@@ -497,6 +504,7 @@ public class MainActivity extends AppCompatActivity {
                         Wanda: Add feed to the db. */
                         ContentValues feedValues = new ContentValues();
                         feedValues.put(FeedEntry.URL, mFeedUrl);
+                        Log.d("TAG", mFeedUrl);
                         feedValues.put(FeedEntry.FEED_TITLE, mFeedTitle);
                         feedValues.put(FeedEntry.FOLDER_ID, folderID);
                         db.insert(FeedEntry.TABLE_NAME, null, feedValues);
@@ -664,6 +672,8 @@ public class MainActivity extends AppCompatActivity {
             /* Date: 03/26/2017
             Wanda: Get the feed url from the text input. */
             feedURL = mEditText.getText().toString().toLowerCase();
+
+
         }
 
         /* Date: 03/25/2017
@@ -729,6 +739,7 @@ public class MainActivity extends AppCompatActivity {
 
         @Override
         protected Boolean doInBackground(Void... voids) {
+            //String updatedURL;
             if (TextUtils.isEmpty(feedURL)) return false;
 
             /* Date: 16/02/2017
@@ -749,6 +760,9 @@ public class MainActivity extends AppCompatActivity {
                             URLConnection connection = url.openConnection();
                             connection.setConnectTimeout(500);
                             stream = connection.getInputStream();
+
+                            feedURL = url.toString();
+
                             /* Date: 19/02/2017
                             Wanda: If there's no exception thrown we use the stream */
                             break;
@@ -794,6 +808,7 @@ public class MainActivity extends AppCompatActivity {
                 updateFeedDetails();
 
                 mRecyclerView.setAdapter(new RssFeedListAdapter(mFeedModelList));
+                Log.d(TAG, "model" + mFeedModelList);
                 addFeedToHistory(feedURL);
 
                 /* Date: 22/03/2017
