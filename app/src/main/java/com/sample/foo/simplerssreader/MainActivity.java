@@ -9,7 +9,6 @@ import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.database.DatabaseUtils;
 import android.database.sqlite.SQLiteDatabase;
-import android.database.sqlite.SQLiteQueryBuilder;
 import android.graphics.Color;
 import android.graphics.drawable.Drawable;
 import android.os.AsyncTask;
@@ -358,8 +357,7 @@ public class MainActivity extends AppCompatActivity {
                 Incoming #3023
                 Wanda: Push the feed onto the folder. */
                 if (feedUrl != null) {
-
-                    final FeedTreeItemHolder.IconTreeItem iconTreeItem = new FeedTreeItemHolder.IconTreeItem(feedTitle);
+                    final FeedTreeItemHolder.FeedTreeItem iconTreeItem = new FeedTreeItemHolder.FeedTreeItem(feedTitle, feedUrl);
                     final FeedTreeItemHolder feedTreeItemHolder = new FeedTreeItemHolder(this);
                     final TreeNode feedNode = new TreeNode(iconTreeItem)
                             .setViewHolder(feedTreeItemHolder);
@@ -738,8 +736,11 @@ public class MainActivity extends AppCompatActivity {
         List<RssFeedModel> parseFeed(InputStream inputStream) throws XmlPullParserException, IOException {
             Document doc = Jsoup.parse(inputStream, null, "", Parser.xmlParser());
             Element rssElement = doc.select("rss").first();
-            if (rssElement == null)
+
+            if (rssElement == null) {
                 throw new XmlPullParserException("Could not find an rss element.");
+            }
+
             feedTitle = innerElementTextOrNull(doc, "rss channel title");
             feedDescription = innerElementTextOrNull(doc, "rss channel description");
 
@@ -818,6 +819,7 @@ public class MainActivity extends AppCompatActivity {
                             stream = connection.getInputStream();
                             /* Date: 19/02/2017
                             Wanda: If there's no exception thrown we use the stream */
+                            mFeedModelList = parseFeed(stream);
                             break;
                         } catch (Exception e) {
                             Log.e(TAG, "Error", e);
@@ -826,9 +828,8 @@ public class MainActivity extends AppCompatActivity {
                 } else {
                     URL url = new URL(feedURL);
                     stream = url.openConnection().getInputStream();
+                    mFeedModelList = parseFeed(stream);
                 }
-                if (stream == null) throw new IOException();
-                mFeedModelList = parseFeed(stream);
                 return true;
             } catch (IOException | XmlPullParserException e) {
                 Log.e(TAG, "Error", e);
