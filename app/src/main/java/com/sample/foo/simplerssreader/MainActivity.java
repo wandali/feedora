@@ -7,6 +7,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.database.Cursor;
+import android.database.DatabaseUtils;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteQueryBuilder;
 import android.graphics.Color;
@@ -31,7 +32,6 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
-import android.view.View.OnClickListener;
 import android.view.ViewGroup;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.ArrayAdapter;
@@ -155,7 +155,7 @@ public class MainActivity extends AppCompatActivity {
         });
 
         /* Date: 22/03/2017
-        Issue: #3591
+        Incoming: #3591
         Apurv: Making sure the Subscribe button remains disabled (we only want to enable it unless there is a legitimate link posted). */
         mSubscribeButton.setEnabled(false);
         mEditText.addTextChangedListener(new TextWatcher() {
@@ -281,42 +281,53 @@ public class MainActivity extends AppCompatActivity {
     public void refreshFolders() {
         LinearLayout foldersContainer = (LinearLayout) findViewById(R.id.foldersContainer);
 
-         /* Date: 19/04/2017
-         Incoming #3010
-         Wanda: Clear the container. */
+        /* Date: 19/04/2017
+        Incoming: #3010
+        Wanda: Clear the container. */
         foldersContainer.removeAllViews();
 
         DBHelper mDbHelper = new DBHelper(getApplicationContext());
         SQLiteDatabase db = mDbHelper.getReadableDatabase();
-        SQLiteQueryBuilder queryBuilder = new SQLiteQueryBuilder();
-        queryBuilder.setTables(
-                FeedEntry.TABLE_NAME +
-                        " feeds LEFT OUTER JOIN " +
-                        FolderEntry.TABLE_NAME +
-                        " folders ON " +
-                        "feeds." + FeedEntry.FOLDER_ID + " = folders." + FolderEntry._ID
-        );
 
-        String sortOrder = FolderEntry.TITLE + " ASC";
-        Cursor cursor = queryBuilder.query(db, null, null, null, null, null, sortOrder);
+        /* Date 03/04/2017
+        Incoming: #3827
+        Wanda: Need to do a full outer join to get empty folders. */
+        final String query =
+                "SELECT " +
+                        "feeds.feed_title, " +
+                        "feeds.folder_id, " +
+                        "feeds.url, " +
+                        "folders.title, " +
+                        "folders._id " +
+                        "FROM " + FeedEntry.TABLE_NAME + " feeds " +
+                        "LEFT JOIN " + FolderEntry.TABLE_NAME + " folders " +
+                        "ON feeds.folder_id=folders._id " +
+                        "UNION ALL " +
+                        "SELECT " +
+                        "feeds.feed_title, " +
+                        "feeds.folder_id, " +
+                        "feeds.url, " +
+                        "folders.title, " +
+                        "folders._id " +
+                        "FROM " + FolderEntry.TABLE_NAME + " folders " +
+                        "LEFT JOIN " + FeedEntry.TABLE_NAME + " feeds " +
+                        "ON folders._id=feeds.folder_id " +
+                        "WHERE feeds.feed_title IS NULL ORDER BY folders.title COLLATE NOCASE";
 
-         /* Date: 19/04/2017
-         Incoming #3010
-         Wanda: Push folders onto the tree. */
-        int folderNameIndex = cursor.getColumnIndex(FolderEntry.TITLE);
-        int folderIDIndex = cursor.getColumnIndex(FolderEntry._ID);
-        int feedUrlIndex = cursor.getColumnIndex(FeedEntry.URL);
-        int feedTitleIndex = cursor.getColumnIndex(FeedEntry.FEED_TITLE);
+        Cursor cursor = db.rawQuery(query, new String[]{});
+
+        /* Date: 19/04/2017
+        Incoming #3010
+        Wanda: Push folders onto the tree. */
         int prevFolderId = -1;
         TreeNode root = TreeNode.root();
         Context context = this;
         TreeNode folderNode = null;
         while (cursor.moveToNext()) {
-            String folderName = cursor.getString(folderNameIndex);
-            final String feedUrl = cursor.getString(feedUrlIndex);
-            final String feedTitle = cursor.getString(feedTitleIndex);
-
-            final int folderID = cursor.getInt(folderIDIndex);
+            final String folderName = cursor.getString(3);
+            final String feedUrl = cursor.getString(2);
+            final String feedTitle = cursor.getString(0);
+            final int folderID = cursor.getInt(4);
 
             /* Date: 22/03/2017
             Incoming #3012
@@ -348,8 +359,10 @@ public class MainActivity extends AppCompatActivity {
                 Wanda: Push the feed onto the folder. */
                 if (feedUrl != null) {
 
-                    TreeNode feedNode = new TreeNode(new FeedTreeItemHolder.IconTreeItem(feedTitle))
-                            .setViewHolder(new FeedTreeItemHolder(this));
+                    final FeedTreeItemHolder.IconTreeItem iconTreeItem = new FeedTreeItemHolder.IconTreeItem(feedTitle);
+                    final FeedTreeItemHolder feedTreeItemHolder = new FeedTreeItemHolder(this);
+                    final TreeNode feedNode = new TreeNode(iconTreeItem)
+                            .setViewHolder(feedTreeItemHolder);
                     /* Date 04/02/2017
                     Incoming #3017
                     Kendra: On a long click, user can delete a feed from under a folder */
@@ -360,7 +373,7 @@ public class MainActivity extends AppCompatActivity {
                             /* Date 04/02/2017
                             Incoming #3017
                             Kendra: Send selected folder and feedURL information to method for deletion of feed. */
-                            openFeedDeleteDialog(folderID, feedUrl);
+                            openDeleteFeedDialog(folderID, feedUrl, feedTreeItemHolder, feedNode);
                             return true;
                         }
                     });
@@ -397,7 +410,7 @@ public class MainActivity extends AppCompatActivity {
     Incoming: #3014
     Kendra: Opens a dialog that asks if user wants to delete a selected feed,
     if they click OK feed will be removed from database*/
-    public void openFeedDeleteDialog(final int folderID, final String FeedUrl) {
+    public void openDeleteFeedDialog(final int folderID, final String FeedUrl, final TreeNode.BaseNodeViewHolder holder, final TreeNode node) {
         final MainActivity self = this;
         new AlertDialog.Builder(this)
                 .setTitle("Are you sure you want to delete this feed?")
@@ -417,7 +430,10 @@ public class MainActivity extends AppCompatActivity {
                                 FeedEntry.FOLDER_ID + "=? and " + FeedEntry.URL + "=?",
                                 whereArguments);
 
-                        self.refreshFolders();
+                        /* Date 03/04/2017
+                        Incoming: #3827
+                        Wanda: Delete the feed in the UI. */
+                        holder.getTreeView().removeNode(node);
                     }
                 })
                 .setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
@@ -426,7 +442,6 @@ public class MainActivity extends AppCompatActivity {
                     }
                 })
                 .show();
-        self.refreshFolders();
     }
 
     /* Date: 22/03/2017
@@ -751,9 +766,9 @@ public class MainActivity extends AppCompatActivity {
                 } catch (Exception e) {
                     thumbUrl = null;
                 }
-            /* Date: 03/25/2017
-            Incoming: #3765
-            Wanda: If we don't have an image try to pull one from the description html. */
+                /* Date: 03/25/2017
+                Incoming: #3765
+                Wanda: If we don't have an image try to pull one from the description html. */
                 if (thumbUrl == null) {
                     try {
                         final String rawDescription = article.select("description").text();
@@ -849,7 +864,7 @@ public class MainActivity extends AppCompatActivity {
                 addFeedToHistory(feedURL);
 
                 /* Date: 22/03/2017
-                Issue: #3591
+                Incoming: #3591
                 Apurv: Making sure the Subscribe button is enabled since we found proper link */
                 mSubscribeButton.setEnabled(true);
             } else {
