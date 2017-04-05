@@ -1,17 +1,13 @@
 package com.sample.foo.simplerssreader;
 
-import android.app.Activity;
 import android.content.Intent;
 import android.os.StrictMode;
 import android.support.v7.app.ActionBar;
-import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
-import android.view.Menu;
 import android.view.MenuItem;
-import android.widget.TextView;
 
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -44,7 +40,7 @@ public class DisplaySubsribedFeed extends MainActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_display_subsribed_feed);
+        setContentView(R.layout.layout_activity_display_subsribed_feed);
         /*
         * Joline: instead of performing an AsyncTask...*/
         StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();

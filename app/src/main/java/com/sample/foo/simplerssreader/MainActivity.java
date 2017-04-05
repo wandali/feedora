@@ -98,7 +98,7 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         final MainActivity self = this;
-        setContentView(R.layout.activity_main);
+        setContentView(R.layout.layout_main_activity);
 
         DrawerLayout mDrawerLayout = (DrawerLayout) findViewById(R.id.drawerLayout);
         mToggle = new ActionBarDrawerToggle(this, mDrawerLayout, R.string.open, R.string.close);
@@ -463,7 +463,7 @@ public class MainActivity extends AppCompatActivity {
     private void openEditFolderDialog(final int folderID) {
         View viewInflated = LayoutInflater
                 .from(this)
-                .inflate(R.layout.dialog_text_input, (ViewGroup) findViewById(android.R.id.content), false);
+                .inflate(R.layout.layout_dialog_text_input, (ViewGroup) findViewById(android.R.id.content), false);
         final EditText input = (EditText) viewInflated.findViewById(R.id.input);
         final MainActivity self = this;
         new AlertDialog.Builder(this)
@@ -535,7 +535,7 @@ public class MainActivity extends AppCompatActivity {
     private void openCreateFolderDialog() {
         View viewInflated = LayoutInflater
                 .from(this)
-                .inflate(R.layout.dialog_text_input, (ViewGroup) findViewById(android.R.id.content), false);
+                .inflate(R.layout.layout_dialog_text_input, (ViewGroup) findViewById(android.R.id.content), false);
         final EditText input = (EditText) viewInflated.findViewById(R.id.input);
 
         final MainActivity self = this;
