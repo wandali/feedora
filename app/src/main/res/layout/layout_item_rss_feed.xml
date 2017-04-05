@@ -1,15 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/editActions"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
+    android:clickable="false"
     android:orientation="horizontal"
     android:paddingLeft="0dp"
     android:paddingRight="0dp"
-    android:paddingTop="5dp"
-    android:id="@+id/editActions"
-    android:paddingBottom="5dp"
-    android:clickable="false">
+    android:paddingTop="@dimen/activity_horizontal_margin"
+    >
 
     <ImageView
         android:id="@+id/thumbnail"
@@ -17,35 +17,39 @@
         android:layout_height="100dp"
         android:layout_gravity="start"
         android:background="#eeeeee"
+        android:clickable="false"
         android:duplicateParentState="true"
-        android:clickable="false" />
+        />
 
     <LinearLayout
-        android:orientation="vertical"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_marginStart="10dp"
-        android:clickable="false">
+        android:clickable="false"
+        android:orientation="vertical"
+        >
 
         <TextView
             android:id="@+id/titleText"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:textStyle="bold"
+            android:clickable="false"
+            android:ellipsize="end"
+            android:maxLines="3"
+            android:minHeight="0dp"
             android:textColor="#000000"
             android:textSize="15sp"
-            android:minHeight="0dp"
-            android:maxLines="3"
-            android:ellipsize="end"
-            android:clickable="false" />
+            android:textStyle="bold"
+            />
 
         <TextView
             android:id="@+id/descriptionText"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:maxLines="2"
+            android:clickable="false"
             android:ellipsize="end"
-            android:clickable="false" />
+            android:maxLines="2"
+            />
 
     </LinearLayout>
 

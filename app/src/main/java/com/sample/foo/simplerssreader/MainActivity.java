@@ -4,10 +4,8 @@ import android.app.AlertDialog;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.DialogInterface;
-import android.content.Intent;
 import android.content.SharedPreferences;
 import android.database.Cursor;
-import android.database.DatabaseUtils;
 import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Color;
 import android.graphics.drawable.Drawable;
@@ -26,6 +24,7 @@ import android.text.Editable;
 import android.text.TextUtils;
 import android.text.TextWatcher;
 import android.util.Log;
+import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -75,7 +74,8 @@ public class MainActivity extends AppCompatActivity {
     private static final String TAG = "MainActivity";
     private static final String historyFile = "History_Pref";
 
-    public ActionBarDrawerToggle mToggle;
+    private View mInfoView;
+    private ActionBarDrawerToggle mToggle;
     private RecyclerView mRecyclerView;
     private AutoCompleteTextView mEditText;
     private ArrayAdapter<String> mAdapter;
@@ -85,8 +85,8 @@ public class MainActivity extends AppCompatActivity {
     private TextView mFeedTitleTextView;
     private TextView mFeedDescriptionTextView;
     private SharedPreferences sharedPref;
-
     private List<RssFeedModel> mFeedModelList;
+    private DrawerLayout mDrawerLayout;
 
     /* Date: 03/26/2017
     Wanda: Data for a successfully fetched feed. */
@@ -100,7 +100,9 @@ public class MainActivity extends AppCompatActivity {
         final MainActivity self = this;
         setContentView(R.layout.layout_main_activity);
 
-        DrawerLayout mDrawerLayout = (DrawerLayout) findViewById(R.id.drawerLayout);
+        mInfoView = findViewById(R.id.feedInfo);
+
+        mDrawerLayout = (DrawerLayout) findViewById(R.id.drawerLayout);
         mToggle = new ActionBarDrawerToggle(this, mDrawerLayout, R.string.open, R.string.close);
 
         mDrawerLayout.addDrawerListener(mToggle);
@@ -115,28 +117,14 @@ public class MainActivity extends AppCompatActivity {
         mFeedDescriptionTextView = (TextView) findViewById(R.id.feedDescription);
         View mHomeButton = findViewById(R.id.menu).findViewById(R.id.homeButton);
 
-
-
         /* Date: 16/03/2017
         Incoming #3026
         Joline: This is for the history set up, used AutoCompleteTextView. mEditText, used to be
         of type "Edit Text" kept name and tag id in case used elsewhere in program*/
         mEditText = (AutoCompleteTextView) findViewById(R.id.rssFeedEditText);
-        mHistoryList = new ArrayList<>();
-        getHistory();
-        mAdapter = new ArrayAdapter<>(this, android.R.layout.simple_dropdown_item_1line, mHistoryList);
-        mEditText.setThreshold(0);
-        mEditText.enoughToFilter();
-        mEditText.setAdapter(mAdapter);
-        mEditText.setOnTouchListener(new View.OnTouchListener() {
-            @Override
-            public boolean onTouch(View v, MotionEvent event) {
-                mEditText.showDropDown();
-                return false;
-            }
-        });
+        setupAutocomplete();
 
-        Button mFetchButton = (Button) findViewById(R.id.fetchFeedButton);
+        Button mFetchFeedButton = (Button) findViewById(R.id.fetchFeedButton);
         mSubscribeButton = (Button) findViewById(R.id.subFeedButton);
         mSwipeLayout = (SwipeRefreshLayout) findViewById(R.id.swipeRefreshLayout);
         mFeedTitleTextView = (TextView) findViewById(R.id.feedTitle);
@@ -149,7 +137,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View view) {
                 Log.v(TAG, "Clicked Home.");
-                self.goHome();
+                self.navigateToHome();
             }
         });
 
@@ -175,11 +163,12 @@ public class MainActivity extends AppCompatActivity {
 
         mRecyclerView.setLayoutManager(new LinearLayoutManager(this));
 
-        mFetchButton.setOnClickListener(new View.OnClickListener() {
+        mFetchFeedButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 Log.v(TAG, "Clicked Fetch.");
-                new FetchFeedTask().execute((Void) null);
+                mFeedUrl = mEditText.getText().toString().toLowerCase();
+                new FetchFeedTask().execute();
             }
         });
 
@@ -187,14 +176,14 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onRefresh() {
                 Log.v(TAG, "Pulled to refresh.");
-                new FetchFeedTask().execute((Void) null);
+                new FetchFeedTask().execute();
             }
         });
 
         mHomeButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                self.goHome();
+                self.navigateToHome();
             }
         });
 
@@ -378,10 +367,10 @@ public class MainActivity extends AppCompatActivity {
                     /*Date: 04/04/17
                     *Issue 3011
                     * Joline: listener for the subscribed feeds*/
-                    feedNode.setClickListener(new TreeNode.TreeNodeClickListener(){
+                    feedNode.setClickListener(new TreeNode.TreeNodeClickListener() {
                         @Override
-                        public void onClick(TreeNode treeNode, Object object){
-                            viewSubFeed(feedTitle,feedUrl);
+                        public void onClick(TreeNode treeNode, Object object) {
+                            navigateToFeed(feedTitle, feedUrl);
                         }
                     });
                     assert folderNode != null;
@@ -399,27 +388,49 @@ public class MainActivity extends AppCompatActivity {
         treeNodeView.setBackgroundColor(Color.WHITE);
         foldersContainer.addView(treeNodeView);
     }
+
     /*Date: 04/04/17
     *Issue 3011
     * Joline: Starting the activity for viewing a subscribed feed*/
-    private void viewSubFeed(String feedTitle, String feedURL){
-        Context context = this;
-        Intent intent = new Intent(context, DisplaySubsribedFeed.class);
-        Bundle extras = new Bundle();
-        extras.putString("FEED_TITLE", feedTitle);
-        extras.putString("FEED_URL", feedURL);
-        intent.putExtras(extras);
-        context.startActivity(intent);
+    private void navigateToFeed(String feedTitle, String feedURL) {
+        // We have to save history before hiding the autocomplete field.
+        setHistory();
+        // Hide info.
+        mInfoView.setVisibility(View.GONE);
+        // Close the side menu.
+        mDrawerLayout.closeDrawer(Gravity.START);
+        // Set the ActionBar title to the feed title.
+        setTitle(feedTitle);
+        mFeedUrl = feedURL;
+        new FetchFeedTask().execute();
+    }
+
+    private void setupAutocomplete() {
+        mHistoryList = new ArrayList<>();
+        getHistory();
+        mAdapter = new ArrayAdapter<>(this, android.R.layout.simple_dropdown_item_1line, mHistoryList);
+        mEditText.setThreshold(0);
+        mEditText.enoughToFilter();
+        mEditText.setAdapter(mAdapter);
+        mEditText.setOnTouchListener(new View.OnTouchListener() {
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
+                mEditText.showDropDown();
+                return false;
+            }
+        });
     }
 
     /* Date: 22/03/2017
     Incoming: #3013
     Kendra: Listener for home button, once clicked main activity is
     refreshed and user is brought home */
-    private void goHome() {
-        Intent homeIntent = new Intent(this, MainActivity.class);
-        homeIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-        startActivity(homeIntent);
+    private void navigateToHome() {
+        mInfoView.setVisibility(View.VISIBLE);
+        mDrawerLayout.closeDrawer(Gravity.START);
+        setTitle("Feedora");
+        // Not sure why we have to redo this after showing it again for results to show up.
+        setupAutocomplete();
     }
 
 
@@ -466,42 +477,12 @@ public class MainActivity extends AppCompatActivity {
                 .inflate(R.layout.layout_dialog_text_input, (ViewGroup) findViewById(android.R.id.content), false);
         final EditText input = (EditText) viewInflated.findViewById(R.id.input);
         final MainActivity self = this;
-        new AlertDialog.Builder(this)
+        AlertDialog.Builder builder = new AlertDialog.Builder(this)
                 .setTitle("Edit Folder")
                 .setView(viewInflated)
                 .setPositiveButton("Rename", new DialogInterface.OnClickListener() {
-                    public void onClick(DialogInterface dialog, int whichButton) {
-
-                        /* Date: 22/03/2017
-                        Incoming: #3014
-                        Kendra: Get the name the user inputs and save it */
-                        String newFolderName = input.getText().toString().trim();
-                        if (newFolderName.length() == 0) {
-                            Toast.makeText(MainActivity.this, "Folder name cannot be blank. Try Again.",
-                                    Toast.LENGTH_LONG).show();
-                            return;
-                        }
-
-                        DBHelper mDbHelper = new DBHelper(getApplicationContext());
-                        SQLiteDatabase db = mDbHelper.getReadableDatabase();
-
-                        /* Date: 22/03/2017
-                        Incoming: #3014
-                        Kendra: Prepare to put new folder name into db */
-                        ContentValues values = new ContentValues();
-                        values.put(FolderEntry.TITLE, newFolderName);
-
-                        /* Date: 22/03/2017
-                        Incoming: #3014
-                        Kendra: Based on folderID, update the folders title in the db to the new
-                        title entered by user */
-                        db.update(
-                                FolderEntry.TABLE_NAME,
-                                values,
-                                "_id = ?",
-                                new String[]{String.valueOf(folderID)});
-                        self.refreshFolders();
-
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
                     }
                 })
                 .setNeutralButton("Delete",
@@ -528,8 +509,63 @@ public class MainActivity extends AppCompatActivity {
 
                             }
                         })
-                .setNegativeButton("Cancel", null)
-                .show();
+                .setNegativeButton("Cancel", null);
+
+        final AlertDialog dialog = builder.create();
+
+        final View.OnClickListener onClickListener = new View.OnClickListener() {
+            public void onClick(View v) {
+                /* Date: 22/03/2017
+                Incoming: #3014
+                Kendra: Get the name the user inputs and save it */
+                String newFolderName = input.getText().toString().trim();
+                if (newFolderName.length() == 0) {
+                    Toast.makeText(MainActivity.this,
+                            "Folder name cannot be blank. Try Again.",
+                            Toast.LENGTH_LONG).show();
+                    return;
+                }
+
+                DBHelper mDbHelper = new DBHelper(getApplicationContext());
+                SQLiteDatabase db = mDbHelper.getReadableDatabase();
+
+                boolean folderExists = folderExistsInDatabase(db, newFolderName);
+                if (folderExists) {
+                    Toast.makeText(MainActivity.this,
+                            "Folder already exists.",
+                            Toast.LENGTH_LONG).show();
+                    return;
+                }
+
+                        /* Date: 22/03/2017
+                        Incoming: #3014
+                        Kendra: Prepare to put new folder name into db */
+                ContentValues values = new ContentValues();
+                values.put(FolderEntry.TITLE, newFolderName);
+
+                        /* Date: 22/03/2017
+                        Incoming: #3014
+                        Kendra: Based on folderID, update the folders title in the db to the new
+                        title entered by user */
+                db.update(
+                        FolderEntry.TABLE_NAME,
+                        values,
+                        "_id = ?",
+                        new String[]{String.valueOf(folderID)});
+                self.refreshFolders();
+                dialog.dismiss();
+            }
+        };
+
+        dialog.setOnShowListener(new DialogInterface.OnShowListener() {
+            @Override
+            public void onShow(DialogInterface d) {
+                Button button = dialog.getButton(DialogInterface.BUTTON_POSITIVE);
+                button.setOnClickListener(onClickListener);
+            }
+        });
+
+        dialog.show();
     }
 
     private void openCreateFolderDialog() {
@@ -539,72 +575,94 @@ public class MainActivity extends AppCompatActivity {
         final EditText input = (EditText) viewInflated.findViewById(R.id.input);
 
         final MainActivity self = this;
-        new AlertDialog.Builder(this)
+        AlertDialog.Builder builder = new AlertDialog.Builder(this)
                 .setTitle("Create a Folder")
                 .setView(viewInflated)
                 .setPositiveButton("Create", new DialogInterface.OnClickListener() {
-                    public void onClick(DialogInterface dialog, int whichButton) {
-
-                        /* Date: 10/03/2017
-                        Francis: Adds the user input to the list of folders. To be established
-                        later. */
-                        String folderName = input.getText().toString().trim();
-                        if (folderName.length() == 0) {
-                            Toast.makeText(MainActivity.this, "Enter a folder name.", Toast.LENGTH_LONG).show();
-                            return;
-                        }
-
-                        /* Date: 19/04/2017
-                        Wanda: Get a writeable database. */
-                        DBHelper mDbHelper = new DBHelper(getApplicationContext());
-                        SQLiteDatabase db = mDbHelper.getWritableDatabase();
-
-                        /* Date: 19/04/2017
-                        Incoming #3010
-                        Wanda: Add folder to the db. */
-                        ContentValues folderValues = new ContentValues();
-                        folderValues.put(FolderEntry.TITLE, folderName);
-                        /*Issue 3043
-                        * Joline: error handling for duplicate folder. Doesn't allow dup to be saved*/
-                        boolean doesExist = ifExists(db, folderName);
-                        if(doesExist){
-                            Toast.makeText(MainActivity.this, "Folder already exists, please select it from the list.",Toast.LENGTH_LONG).show();
-                            return;
-                        }
-                        long folderID = db.insert(FolderEntry.TABLE_NAME, null, folderValues);
-
-                        /* Date: 19/04/2017
-                        Incoming #3023
-                        Wanda: Add feed to the db. */
-                        ContentValues feedValues = new ContentValues();
-                        feedValues.put(FeedEntry.URL, mFeedUrl);
-                        feedValues.put(FeedEntry.FEED_TITLE, mFeedTitle);
-                        feedValues.put(FeedEntry.FOLDER_ID, folderID);
-                        db.insert(FeedEntry.TABLE_NAME, null, feedValues);
-
-                        /* Date: 19/04/2017
-                        Wanda: Refresh UI. */
-                        self.refreshFolders();
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
                     }
                 })
                 .setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int whichButton) {
                     }
-                }).show();
+                });
+
+        final AlertDialog dialog = builder.create();
+
+        final View.OnClickListener onClickListener = new View.OnClickListener() {
+            public void onClick(View v) {
+
+                /* Date: 10/03/2017
+                Francis: Adds the user input to the list of folders. To be established
+                later. */
+                String folderName = input.getText().toString().trim();
+                if (folderName.length() == 0) {
+                    Toast.makeText(MainActivity.this,
+                            "Enter a folder name.",
+                            Toast.LENGTH_LONG).show();
+                    return;
+                }
+
+                /* Date: 19/04/2017
+                Wanda: Get a writeable database. */
+                DBHelper mDbHelper = new DBHelper(getApplicationContext());
+                SQLiteDatabase db = mDbHelper.getWritableDatabase();
+
+                /* Date: 19/04/2017
+                Incoming #3010
+                Wanda: Add folder to the db. */
+                ContentValues folderValues = new ContentValues();
+                folderValues.put(FolderEntry.TITLE, folderName);
+
+                /*Issue 3043
+                * Joline: error handling for duplicate folder. Doesn't allow dup to be saved*/
+                boolean folderExists = folderExistsInDatabase(db, folderName);
+                if (folderExists) {
+                    Toast.makeText(MainActivity.this,
+                            "Folder already exists.",
+                            Toast.LENGTH_LONG).show();
+                    return;
+                }
+                long folderID = db.insert(FolderEntry.TABLE_NAME, null, folderValues);
+
+                /* Date: 19/04/2017
+                Incoming #3023
+                Wanda: Add feed to the db. */
+                ContentValues feedValues = new ContentValues();
+                feedValues.put(FeedEntry.URL, mFeedUrl);
+                feedValues.put(FeedEntry.FEED_TITLE, mFeedTitle);
+                feedValues.put(FeedEntry.FOLDER_ID, folderID);
+                db.insert(FeedEntry.TABLE_NAME, null, feedValues);
+
+                /* Date: 19/04/2017
+                Wanda: Refresh UI. */
+                self.refreshFolders();
+                dialog.dismiss();
+            }
+        };
+
+        dialog.setOnShowListener(new DialogInterface.OnShowListener() {
+            @Override
+            public void onShow(DialogInterface d) {
+                Button button = dialog.getButton(DialogInterface.BUTTON_POSITIVE);
+                button.setOnClickListener(onClickListener);
+            }
+        });
+        dialog.show();
     }
 
     /*Date: 04/04/17
     * Issue 3043
     * Joline: using this function to check the SQLite database to see if the folder the user entered
     * in create folder already exists*/
-    private boolean ifExists(SQLiteDatabase db, String folderName){
+    private boolean folderExistsInDatabase(SQLiteDatabase db, String folderName) {
         Cursor cursor;
-        String checkDB = "SELECT TITLE FROM "+ FolderEntry.TABLE_NAME +" WHERE TITLE = '" + folderName +"'";
-        cursor = db.rawQuery(checkDB, null);
+        String checkDB = "SELECT TITLE FROM " + FolderEntry.TABLE_NAME + " WHERE TITLE=?";
+        cursor = db.rawQuery(checkDB, new String[]{folderName});
         boolean exists = false;
         cursor.moveToFirst();
-        Log.v("Database", DatabaseUtils.dumpCursorToString(cursor));
-        if(cursor.getCount() > 0) exists = true;
+        if (cursor.getCount() > 0) exists = true;
         cursor.close();
         return exists;
     }
@@ -717,7 +775,6 @@ public class MainActivity extends AppCompatActivity {
     private void clearFeedDetails() {
         mFeedTitle = "";
         mFeedDescription = "";
-        mFeedUrl = "";
         updateFeedDetails();
     }
 
@@ -760,7 +817,7 @@ public class MainActivity extends AppCompatActivity {
 
             /* Date: 03/26/2017
             Wanda: Get the feed url from the text input. */
-            feedURL = mEditText.getText().toString().toLowerCase();
+            feedURL = mFeedUrl;
         }
 
         /* Date: 03/25/2017
@@ -839,6 +896,8 @@ public class MainActivity extends AppCompatActivity {
             try {
                 InputStream stream;
                 Boolean hasNoProtocol = !feedURL.startsWith("http://") && !feedURL.startsWith("https://");
+                Boolean succeeded = false;
+                Exception fetchException = null;
                 if (hasNoProtocol) {
                     ArrayList<URL> possibleUrls = new ArrayList<>(Arrays.asList(
                             new URL("https://" + feedURL),
@@ -853,18 +912,25 @@ public class MainActivity extends AppCompatActivity {
                             /* Date: 19/02/2017
                             Wanda: If there's no exception thrown we use the stream */
                             mFeedModelList = parseFeed(stream);
+                            succeeded = true;
                             break;
                         } catch (Exception e) {
-                            Log.e(TAG, "Error", e);
+                            fetchException = e;
                         }
                     }
                 } else {
-                    URL url = new URL(feedURL);
-                    stream = url.openConnection().getInputStream();
-                    mFeedModelList = parseFeed(stream);
+                    try {
+                        URL url = new URL(feedURL);
+                        stream = url.openConnection().getInputStream();
+                        mFeedModelList = parseFeed(stream);
+                        succeeded = true;
+                    } catch (Exception e) {
+                        fetchException = e;
+                    }
                 }
+                if (!succeeded) throw fetchException;
                 return true;
-            } catch (IOException | XmlPullParserException e) {
+            } catch (Exception e) {
                 Log.e(TAG, "Error", e);
                 if (mFeedModelList != null) mFeedModelList.clear();
             }
