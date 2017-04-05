@@ -31,6 +31,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.View.OnClickListener;
 import android.view.ViewGroup;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.ArrayAdapter;
@@ -75,7 +76,8 @@ public class MainActivity extends AppCompatActivity {
     private static final String TAG = "MainActivity";
     private static final String historyFile = "History_Pref";
 
-    private ActionBarDrawerToggle mToggle;
+    public ActionBarDrawerToggle mToggle;
+    View.OnClickListener mOriginalListener;
     private RecyclerView mRecyclerView;
     private AutoCompleteTextView mEditText;
     private ArrayAdapter<String> mAdapter;
@@ -375,7 +377,15 @@ public class MainActivity extends AppCompatActivity {
                             return true;
                         }
                     });
-
+                    /*Date: 04/04/17
+                    *Issue 3011
+                    * Joline: listener for the subscribed feeds*/
+                    feedNode.setClickListener(new TreeNode.TreeNodeClickListener(){
+                        @Override
+                        public void onClick(TreeNode treeNode, Object object){
+                            viewSubFeed(feedTitle,feedUrl);
+                        }
+                    });
                     assert folderNode != null;
                     folderNode.addChildren(feedNode);
                 }
@@ -390,6 +400,18 @@ public class MainActivity extends AppCompatActivity {
         View treeNodeView = treeView.getView();
         treeNodeView.setBackgroundColor(Color.WHITE);
         foldersContainer.addView(treeNodeView);
+    }
+    /*Date: 04/04/17
+    *Issue 3011
+    * Joline: Starting the activity for viewing a subscribed feed*/
+    public void viewSubFeed(String feedTitle, String feedURL){
+        Context context = this;
+        Intent intent = new Intent(context, DisplaySubsribedFeed.class);
+        Bundle extras = new Bundle();
+        extras.putString("FEED_TITLE", feedTitle);
+        extras.putString("FEED_URL", feedURL);
+        intent.putExtras(extras);
+        context.startActivity(intent);
     }
 
     /* Date: 22/03/2017
@@ -554,6 +576,13 @@ public class MainActivity extends AppCompatActivity {
                         Wanda: Add folder to the db. */
                         ContentValues folderValues = new ContentValues();
                         folderValues.put(FolderEntry.TITLE, folderName);
+                        /*Issue 3043
+                        * Joline: error handling for duplicate folder. Doesn't allow dup to be saved*/
+                        boolean doesExist = ifExists(db, folderValues,folderName);
+                        if(doesExist){
+                            Toast.makeText(MainActivity.this, "Folder Exists, Please Selcect From List",Toast.LENGTH_LONG).show();
+                            return;
+                        }
                         long folderID = db.insert(FolderEntry.TABLE_NAME, null, folderValues);
 
                         /* Date: 19/04/2017
@@ -574,6 +603,21 @@ public class MainActivity extends AppCompatActivity {
                     public void onClick(DialogInterface dialog, int whichButton) {
                     }
                 }).show();
+    }
+    /*Date: 04/04/17
+    * Issue 3043
+    * Joline: using this function to check the SQLite database to see if the folder the user entered
+    * in create folder already exists*/
+    public boolean ifExists(SQLiteDatabase db, ContentValues content, String folderName){
+        Cursor cursor=null;
+        String checkDB = "SELECT TITLE FROM "+ FolderEntry.TABLE_NAME +" WHERE TITLE = '" + folderName +"'";
+        cursor = db.rawQuery(checkDB, null);
+        boolean exists = false;
+        cursor.moveToFirst();
+        Log.v("Database", DatabaseUtils.dumpCursorToString(cursor));
+        if(cursor.getCount() > 0) exists = true;
+        cursor.close();
+        return exists;
     }
 
     @Override
@@ -709,7 +753,7 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    private class FetchFeedTask extends AsyncTask<Void, Void, Boolean> {
+    public class FetchFeedTask extends AsyncTask<Void, Void, Boolean> {
 
         private String feedTitle;
         private String feedURL;
