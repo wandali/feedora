@@ -31,7 +31,6 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
-import android.view.View.OnClickListener;
 import android.view.ViewGroup;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.ArrayAdapter;
@@ -77,7 +76,6 @@ public class MainActivity extends AppCompatActivity {
     private static final String historyFile = "History_Pref";
 
     public ActionBarDrawerToggle mToggle;
-    View.OnClickListener mOriginalListener;
     private RecyclerView mRecyclerView;
     private AutoCompleteTextView mEditText;
     private ArrayAdapter<String> mAdapter;
@@ -279,7 +277,7 @@ public class MainActivity extends AppCompatActivity {
         self.refreshFolders();
     }
 
-    public void refreshFolders() {
+    private void refreshFolders() {
         LinearLayout foldersContainer = (LinearLayout) findViewById(R.id.foldersContainer);
 
         /* Date: 19/04/2017
@@ -404,7 +402,7 @@ public class MainActivity extends AppCompatActivity {
     /*Date: 04/04/17
     *Issue 3011
     * Joline: Starting the activity for viewing a subscribed feed*/
-    public void viewSubFeed(String feedTitle, String feedURL){
+    private void viewSubFeed(String feedTitle, String feedURL){
         Context context = this;
         Intent intent = new Intent(context, DisplaySubsribedFeed.class);
         Bundle extras = new Bundle();
@@ -418,11 +416,10 @@ public class MainActivity extends AppCompatActivity {
     Incoming: #3013
     Kendra: Listener for home button, once clicked main activity is
     refreshed and user is brought home */
-    public void goHome() {
+    private void goHome() {
         Intent homeIntent = new Intent(this, MainActivity.class);
         homeIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
         startActivity(homeIntent);
-
     }
 
 
@@ -430,8 +427,7 @@ public class MainActivity extends AppCompatActivity {
     Incoming: #3014
     Kendra: Opens a dialog that asks if user wants to delete a selected feed,
     if they click OK feed will be removed from database*/
-    public void openDeleteFeedDialog(final int folderID, final String FeedUrl, final TreeNode.BaseNodeViewHolder holder, final TreeNode node) {
-        final MainActivity self = this;
+    private void openDeleteFeedDialog(final int folderID, final String FeedUrl, final TreeNode.BaseNodeViewHolder holder, final TreeNode node) {
         new AlertDialog.Builder(this)
                 .setTitle("Are you sure you want to delete this feed?")
                 .setPositiveButton("OK", new DialogInterface.OnClickListener() {
@@ -456,11 +452,7 @@ public class MainActivity extends AppCompatActivity {
                         holder.getTreeView().removeNode(node);
                     }
                 })
-                .setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
-                    public void onClick(DialogInterface dialog, int whichButton) {
-
-                    }
-                })
+                .setNegativeButton("Cancel", null)
                 .show();
     }
 
@@ -468,7 +460,7 @@ public class MainActivity extends AppCompatActivity {
     Incoming: #3014
     Kendra: Listener for edit button for the folders menu, allows user to edit folders they created
     Pre: folderID is passed in, which holds the folder info the user has chosen to edit*/
-    public void openEditFolderDialog(final int folderID) {
+    private void openEditFolderDialog(final int folderID) {
         View viewInflated = LayoutInflater
                 .from(this)
                 .inflate(R.layout.dialog_text_input, (ViewGroup) findViewById(android.R.id.content), false);
@@ -536,15 +528,11 @@ public class MainActivity extends AppCompatActivity {
 
                             }
                         })
-                .setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
-                    public void onClick(DialogInterface dialog, int whichButton) {
-
-                    }
-                })
+                .setNegativeButton("Cancel", null)
                 .show();
     }
 
-    public void openCreateFolderDialog() {
+    private void openCreateFolderDialog() {
         View viewInflated = LayoutInflater
                 .from(this)
                 .inflate(R.layout.dialog_text_input, (ViewGroup) findViewById(android.R.id.content), false);
@@ -578,9 +566,9 @@ public class MainActivity extends AppCompatActivity {
                         folderValues.put(FolderEntry.TITLE, folderName);
                         /*Issue 3043
                         * Joline: error handling for duplicate folder. Doesn't allow dup to be saved*/
-                        boolean doesExist = ifExists(db, folderValues,folderName);
+                        boolean doesExist = ifExists(db, folderName);
                         if(doesExist){
-                            Toast.makeText(MainActivity.this, "Folder Exists, Please Selcect From List",Toast.LENGTH_LONG).show();
+                            Toast.makeText(MainActivity.this, "Folder already exists, please select it from the list.",Toast.LENGTH_LONG).show();
                             return;
                         }
                         long folderID = db.insert(FolderEntry.TABLE_NAME, null, folderValues);
@@ -604,12 +592,13 @@ public class MainActivity extends AppCompatActivity {
                     }
                 }).show();
     }
+
     /*Date: 04/04/17
     * Issue 3043
     * Joline: using this function to check the SQLite database to see if the folder the user entered
     * in create folder already exists*/
-    public boolean ifExists(SQLiteDatabase db, ContentValues content, String folderName){
-        Cursor cursor=null;
+    private boolean ifExists(SQLiteDatabase db, String folderName){
+        Cursor cursor;
         String checkDB = "SELECT TITLE FROM "+ FolderEntry.TABLE_NAME +" WHERE TITLE = '" + folderName +"'";
         cursor = db.rawQuery(checkDB, null);
         boolean exists = false;
@@ -701,7 +690,7 @@ public class MainActivity extends AppCompatActivity {
 
     /* Date: 03/22/2017
     * Joline: Uses shared preferences to get the saved history from another instance of the app*/
-    public void getHistory() {
+    private void getHistory() {
         sharedPref = getSharedPreferences(historyFile, 0);
         int size = sharedPref.getInt("list_size", 0);
         for (int i = 0; i < size; i++)
@@ -710,7 +699,7 @@ public class MainActivity extends AppCompatActivity {
 
     /*Date: 03/22/2017
     * Joline: saves the users url list via shared preferences*/
-    public void setHistory() {
+    private void setHistory() {
         sharedPref = getSharedPreferences(historyFile, 0);
         SharedPreferences.Editor editor = sharedPref.edit();
         int size = mHistoryList.size();
@@ -741,7 +730,7 @@ public class MainActivity extends AppCompatActivity {
     /* Date: 16/03/2017
     Joline: This function updates the adapter and history list by adding the
     most recent accepted url submitted by the user. Shows the most recent url first. */
-    void addFeedToHistory(String feedURL) {
+    private void addFeedToHistory(String feedURL) {
         if (!mHistoryList.contains(feedURL)) {
             if (mHistoryList.size() == 5) {
                 mHistoryList.remove(4);
@@ -753,7 +742,7 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    public class FetchFeedTask extends AsyncTask<Void, Void, Boolean> {
+    private class FetchFeedTask extends AsyncTask<Void, Void, Boolean> {
 
         private String feedTitle;
         private String feedURL;
@@ -848,7 +837,7 @@ public class MainActivity extends AppCompatActivity {
             it will load the proper one for the website so the articles can be pulled and it does
             not get displayed as invalid RSS feed url */
             try {
-                InputStream stream = null;
+                InputStream stream;
                 Boolean hasNoProtocol = !feedURL.startsWith("http://") && !feedURL.startsWith("https://");
                 if (hasNoProtocol) {
                     ArrayList<URL> possibleUrls = new ArrayList<>(Arrays.asList(
