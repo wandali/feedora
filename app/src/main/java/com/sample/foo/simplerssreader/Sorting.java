@@ -3,8 +3,7 @@ package com.sample.foo.simplerssreader;
 import java.util.Comparator;
 import java.util.Random;
 
-/*
-Date: 08/03/2017
+/* Date: 08/03/2017
 Incoming: #3007
 Incoming: #3008
 Incoming: #3009
@@ -20,8 +19,7 @@ public class Sorting implements Comparator<RssFeedModel> {
         this.sortType = sortType;
     }
 
-    /*
-    Date: 05/04/2017
+    /* Date: 05/04/2017
     Incoming: #3052
     Francis: This is the function that performs the sorting itself. */
     @Override
