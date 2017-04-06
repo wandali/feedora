@@ -3,15 +3,13 @@ package com.sample.foo.simplerssreader;
 import java.util.Comparator;
 import java.util.Random;
 
-/**
- * Date: 08/03/2017
- * Jack: Created a class for the sorting algorithms used in the application
- *
- * Incoming: #3007
- * Incoming: #3008
- * Incoming: #3009
- * Jack: Returns values used for sorting the articles.
- */
+/*
+Date: 08/03/2017
+Incoming: #3007
+Incoming: #3008
+Incoming: #3009
+Jack: Created a class for the sorting algorithms used in the application. Returns values used
+for sorting the articles. */
 
 public class Sorting implements Comparator<RssFeedModel> {
     private String sortType;
