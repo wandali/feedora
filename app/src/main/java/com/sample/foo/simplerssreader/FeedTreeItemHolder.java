@@ -12,7 +12,11 @@ import com.google.common.net.InternetDomainName;
 import com.unnamed.b.atv.model.TreeNode;
 import com.unnamed.b.atv.model.TreeNode.BaseNodeViewHolder;
 
-
+/* Date: 05/04/2017
+Incoming #3052
+Francis: This class is a tree, it is used each time the folders are refreshed to store the
+sql table and enable AndroidTreeView to function in the main code. This tree holds each
+individual feed. */
 class FeedTreeItemHolder extends BaseNodeViewHolder<FeedTreeItemHolder.FeedTreeItem> {
 
     FeedTreeItemHolder(Context context) {

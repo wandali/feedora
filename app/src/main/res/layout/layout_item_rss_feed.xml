@@ -1,4 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- Date: 05/04/2017
+Incoming #3052
+Francis: Each individual rss item's layout is created here. -->
 <LinearLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/editActions"

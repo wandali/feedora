@@ -22,7 +22,11 @@ public class Sorting implements Comparator<RssFeedModel> {
         this.sortType = sortType;
     }
 
-
+    /*
+    Date: 05/04/2017
+    Incoming #3052
+    Francis: This is the function that performs the sorting itself.
+    */
     @Override
     public int compare(RssFeedModel article1, RssFeedModel article2) {
         if (sortType.equals("dateOldest")) {

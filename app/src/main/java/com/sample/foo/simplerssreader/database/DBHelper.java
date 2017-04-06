@@ -6,6 +6,10 @@ import android.database.sqlite.SQLiteOpenHelper;
 import com.sample.foo.simplerssreader.database.FolderContract.FolderEntry;
 import com.sample.foo.simplerssreader.database.FeedContract.FeedEntry;
 
+/* Date: 05/04/2017
+Incoming #3052
+Francis: This is the SQL database itself. The makeup of each table is established in
+DBHelper */
 public class DBHelper extends SQLiteOpenHelper {
 
     /* Date: 19/04/2017

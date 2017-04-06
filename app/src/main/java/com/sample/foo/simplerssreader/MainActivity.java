@@ -89,11 +89,17 @@ public class MainActivity extends AppCompatActivity {
     private DrawerLayout mDrawerLayout;
 
     /* Date: 03/26/2017
+    Incoming #3051
     Wanda: Data for a successfully fetched feed. */
     private String mFeedTitle = "";
     private String mFeedDescription = "";
     private String mFeedUrl = "";
 
+    /* Date: 05/04/2017
+    Incoming #3052
+    Francis: OnCreate function, necessary in every android application. Part of the functionality
+    of the subscribe button is established here. This is a necessity of the dropdown menu, as it
+    was required to be disabled beforehand. */
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -133,7 +139,7 @@ public class MainActivity extends AppCompatActivity {
         mHomeButton.setOnClickListener(new View.OnClickListener() {
             /* Date: 13/03/2017
             Incoming #3013
-            Used to set an action listener to the home button to direct the user to the home screen. */
+            Francis: Used to set an action listener to the home button to direct the user to the home screen. */
             @Override
             public void onClick(View view) {
                 Log.v(TAG, "Clicked Home.");
@@ -143,7 +149,8 @@ public class MainActivity extends AppCompatActivity {
 
         /* Date: 22/03/2017
         Incoming: #3591
-        Apurv: Making sure the Subscribe button remains disabled (we only want to enable it unless there is a legitimate link posted). */
+        Apurv: Making sure the Subscribe button remains disabled (we only want to enable it unless
+        there is a legitimate link posted). */
         mSubscribeButton.setEnabled(false);
         mEditText.addTextChangedListener(new TextWatcher() {
             @Override
@@ -188,17 +195,13 @@ public class MainActivity extends AppCompatActivity {
         });
 
         mSubscribeButton.setOnClickListener(new View.OnClickListener() {
-            /* Date: 16/02/2017
-            Francis: IMPORTANT NOTE: READ THIS FOR ADDING NEW MENU ITEMS PROGRAMMATICALLY
-            popup.getMenu().add(groupId, itemId, order, title); for each menuItem you want to add.
-            This comment is left in for the other group members. Depending on if I wind up
-            not working on adding new items to the drop down menu. */
             @Override
             public void onClick(View view) {
                 Log.v(TAG, "Clicked subscribe.");
 
                 PopupMenu popup = new PopupMenu(MainActivity.this, mSubscribeButton);
                 /* Date: 16/02/2017
+                Incoming #3050
                 Francis: Inflating the Popup through the xml file */
                 popup.getMenuInflater().inflate(R.menu.subscribe_menu, popup.getMenu());
 
@@ -235,6 +238,7 @@ public class MainActivity extends AppCompatActivity {
                 cursor.close();
 
                 /* Date: 16/02/2017
+                Incoming #3050
                 Francis: Registering popup with OnMenuItemClickListener. So you can click on the
                 options */
                 popup.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
@@ -266,6 +270,11 @@ public class MainActivity extends AppCompatActivity {
         self.refreshFolders();
     }
 
+    /* Date: 05/04/2017
+    Incoming #3052
+    Francis: The refreshFolders function only deals with the AndroidTreeView in the sidebar.
+    It refreshes the sidebar folders to accommodate for any changes in the sql database. Call it
+    whenever a change is performed on the sql database. */
     private void refreshFolders() {
         LinearLayout foldersContainer = (LinearLayout) findViewById(R.id.foldersContainer);
 
@@ -415,6 +424,10 @@ public class MainActivity extends AppCompatActivity {
         new FetchFeedTask().execute();
     }
 
+    /* Date: 05/04/2017
+    Incoming #3052
+    Francis: Function references the history of searched feeds to recognize a feed that the user
+    may wish to revisit. */
     private void setupAutocomplete() {
         mHistoryList = new ArrayList<>();
         getHistory();
@@ -580,6 +593,10 @@ public class MainActivity extends AppCompatActivity {
         dialog.show();
     }
 
+    /* Date: 05/04/2017
+    Incoming #3052
+    Francis: This is a dialog that is referenced by the subscribe menu (Create Folder). Any
+    function that creates a new folder should reference this dialog to do so. */
     private void openCreateFolderDialog() {
         View viewInflated = LayoutInflater
                 .from(this)
@@ -606,6 +623,7 @@ public class MainActivity extends AppCompatActivity {
             public void onClick(View v) {
 
                 /* Date: 10/03/2017
+                Incoming #3050
                 Francis: Adds the user input to the list of folders. To be established
                 later. */
                 String folderName = input.getText().toString().trim();
@@ -617,6 +635,7 @@ public class MainActivity extends AppCompatActivity {
                 }
 
                 /* Date: 19/04/2017
+                Incoming #3010
                 Wanda: Get a writeable database. */
                 DBHelper mDbHelper = new DBHelper(getApplicationContext());
                 SQLiteDatabase db = mDbHelper.getWritableDatabase();
@@ -695,23 +714,22 @@ public class MainActivity extends AppCompatActivity {
         return true;
     }
 
+    /* Date: 05/04/2017
+    Incoming #3052
+    Francis: The listener for the sort menu. */
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         /* Date: 16/02/2017
         Francis: Handle action bar item clicks here. (The top right menu) */
         int id = item.getItemId();
 
-
-        /* Date: 16/02/2017
-        Francis: For no functionality, the below if statement is sufficient. */
-
         if (mToggle.onOptionsItemSelected(item)) {
             return (true);
         }
 
         /* Date: 16/02/2017
-        Francis: A row of if statements to give each button their own functionality later.
-        May as well do it now. */
+        Incoming #3050
+        Francis: A row of if statements to give each button their own functionality later. */
         if (id == R.id.dateOldest) {
             if (mFeedModelList != null) {
                 Collections.sort(mFeedModelList, new Sorting("dateOldest"));
@@ -752,6 +770,9 @@ public class MainActivity extends AppCompatActivity {
         return super.onOptionsItemSelected(item);
     }
 
+    /* Date: 05/04/2017
+    Incoming #3052
+    Francis: A check to determine whether an element has text. Returns the text or null. */
     public String innerElementTextOrNull(Element element, String elementName) {
         try {
             return element.select(elementName).first().text();
@@ -761,6 +782,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     /* Date: 03/22/2017
+    Incoming #3026
     Joline: Uses shared preferences to get the saved history from another instance of the app */
     private void getHistory() {
         sharedPref = getSharedPreferences(historyFile, 0);
@@ -770,6 +792,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     /* Date: 03/22/2017
+    Incoming #3026
     Joline: saves the users url list via shared preferences */
     private void setHistory() {
         sharedPref = getSharedPreferences(historyFile, 0);
@@ -792,6 +815,9 @@ public class MainActivity extends AppCompatActivity {
         updateFeedDetails();
     }
 
+    /* Date: 05/04/2017
+    Incoming #3026
+    Francis: onStop function modified to save history instead of simple closing. */
     @Override
     public void onStop() {
         super.onStop();
@@ -799,6 +825,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     /* Date: 16/03/2017
+    Incoming #3026
     Joline: This function updates the adapter and history list by adding the
     most recent accepted url submitted by the user. Shows the most recent url first. */
     private void addFeedToHistory(String feedURL) {
@@ -813,6 +840,10 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    /* Date: 05/04/2017
+    Incoming #3052
+    Francis: This part onward is the original code. Any additions will have their own comments
+    within the function. */
     private class FetchFeedTask extends AsyncTask<Void, Void, Boolean> {
 
         private String feedTitle;
@@ -822,14 +853,17 @@ public class MainActivity extends AppCompatActivity {
         @Override
         protected void onPreExecute() {
             /* Date: 03/26/2017
+            Incoming #3054
             Wanda: Set the layout state to refreshing. */
             mSwipeLayout.setRefreshing(true);
 
             /* Date: 03/26/2017
+            Incoming #3049
             Wanda: Reset UI. */
             clearFeedDetails();
 
             /* Date: 03/26/2017
+            Incoming #3337
             Wanda: Get the feed url from the text input. */
             feedURL = mFeedUrl;
         }
@@ -904,6 +938,7 @@ public class MainActivity extends AppCompatActivity {
             if (TextUtils.isEmpty(feedURL)) return false;
 
             /* Date: 16/02/2017
+            Incoming #3337
             Wanda: If the URL entered does not have an http or https and/or www. associated with it,
             it will load the proper one for the website so the articles can be pulled and it does
             not get displayed as invalid RSS feed url */
@@ -924,6 +959,7 @@ public class MainActivity extends AppCompatActivity {
                             connection.setConnectTimeout(500);
                             stream = connection.getInputStream();
                             /* Date: 19/02/2017
+                            Incoming #3337
                             Wanda: If there's no exception thrown we use the stream */
                             mFeedModelList = parseFeed(stream);
                             succeeded = true;
@@ -954,6 +990,7 @@ public class MainActivity extends AppCompatActivity {
         @Override
         protected void onPostExecute(Boolean success) {
             /* Date: 26/03/2017
+            Incoming #3054
             Wanda: Done refreshing. */
             mSwipeLayout.setRefreshing(false);
 

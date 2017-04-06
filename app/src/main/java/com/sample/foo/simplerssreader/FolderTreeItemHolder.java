@@ -11,6 +11,10 @@ import android.content.Context;
 import android.view.LayoutInflater;
 import android.view.View;
 
+/* Date: 05/04/2017
+Incoming #3052
+Francis: This is another tree, much like FeedTreeItemHolder, however this tree stores
+each folder. Which are supposed to hold several feeds all on their own. */
 class FolderTreeItemHolder extends BaseNodeViewHolder<FolderTreeItemHolder.IconTreeItem> {
     private IconicsImageView arrowIcon;
     private View.OnClickListener clickListener;
@@ -20,6 +24,10 @@ class FolderTreeItemHolder extends BaseNodeViewHolder<FolderTreeItemHolder.IconT
         this.clickListener = clickListener;
     }
 
+    /* Date: 05/04/2017
+    Incoming #3052
+    Francis: This function actually creates a node. It is expected to return a View named view.
+    It does not last long enough for the name to cause conflicts. */
     @Override
     public View createNodeView(TreeNode node, FolderTreeItemHolder.IconTreeItem value) {
         final LayoutInflater inflater = LayoutInflater.from(context);
@@ -43,6 +51,11 @@ class FolderTreeItemHolder extends BaseNodeViewHolder<FolderTreeItemHolder.IconT
         return view;
     }
 
+
+    /* Date: 05/04/2017
+    Incoming #3052
+    Francis: A simple toggle. This changes the arrow in the display to indicate an open or closed
+    folder. */
     @Override
     public void toggle(boolean active) {
         if (active) {
@@ -52,6 +65,9 @@ class FolderTreeItemHolder extends BaseNodeViewHolder<FolderTreeItemHolder.IconT
         }
     }
 
+    /* Date: 05/04/2017
+    Incoming #3052
+    Francis: Gets the text for an icon. */
     static class IconTreeItem {
         public String text;
 
