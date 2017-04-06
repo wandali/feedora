@@ -12,7 +12,7 @@ public class ArticleViewActivity extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_article_view);
+        setContentView(R.layout.layout_activity_article_view);
         Bundle b = getIntent().getExtras();
         String link = b.getString("link");
         WebView webView=(WebView)findViewById(R.id.webView);
