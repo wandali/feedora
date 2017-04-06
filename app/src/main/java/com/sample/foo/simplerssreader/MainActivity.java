@@ -89,14 +89,14 @@ public class MainActivity extends AppCompatActivity {
     private DrawerLayout mDrawerLayout;
 
     /* Date: 03/26/2017
-    Incoming #3051
+    Incoming: #3051
     Wanda: Data for a successfully fetched feed. */
     private String mFeedTitle = "";
     private String mFeedDescription = "";
     private String mFeedUrl = "";
 
     /* Date: 05/04/2017
-    Incoming #3052
+    Incoming: #3052
     Francis: OnCreate function, necessary in every android application. Part of the functionality
     of the subscribe button is established here. This is a necessity of the dropdown menu, as it
     was required to be disabled beforehand. */
@@ -124,7 +124,7 @@ public class MainActivity extends AppCompatActivity {
         View mHomeButton = findViewById(R.id.menu).findViewById(R.id.homeButton);
 
         /* Date: 16/03/2017
-        Incoming #3026
+        Incoming: #3026
         Joline: This is for the history set up, used AutoCompleteTextView. mEditText, used to be
         of type "Edit Text" kept name and tag id in case used elsewhere in program*/
         mEditText = (AutoCompleteTextView) findViewById(R.id.rssFeedEditText);
@@ -138,7 +138,7 @@ public class MainActivity extends AppCompatActivity {
 
         mHomeButton.setOnClickListener(new View.OnClickListener() {
             /* Date: 13/03/2017
-            Incoming #3013
+            Incoming: #3013
             Francis: Used to set an action listener to the home button to direct the user to the home screen. */
             @Override
             public void onClick(View view) {
@@ -201,12 +201,12 @@ public class MainActivity extends AppCompatActivity {
 
                 PopupMenu popup = new PopupMenu(MainActivity.this, mSubscribeButton);
                 /* Date: 16/02/2017
-                Incoming #3050
+                Incoming: #3050
                 Francis: Inflating the Popup through the xml file */
                 popup.getMenuInflater().inflate(R.menu.subscribe_menu, popup.getMenu());
 
                 /* Date: 19/04/2017
-                Incoming #3010
+                Incoming: #3010
                 Wanda: Get the folders from the db. */
                 DBHelper mDbHelper = new DBHelper(getApplicationContext());
                 SQLiteDatabase db = mDbHelper.getReadableDatabase();
@@ -226,7 +226,7 @@ public class MainActivity extends AppCompatActivity {
                 );
 
                 /* Date: 19/04/2017
-                Incoming #3010
+                Incoming: #3010
                 Wanda: Push folder items onto the subscribe popup menu. */
                 int folderNameIndex = cursor.getColumnIndexOrThrow(FolderEntry.TITLE);
                 int folderIDIndex = cursor.getColumnIndexOrThrow(FolderEntry._ID);
@@ -238,7 +238,7 @@ public class MainActivity extends AppCompatActivity {
                 cursor.close();
 
                 /* Date: 16/02/2017
-                Incoming #3050
+                Incoming: #3050
                 Francis: Registering popup with OnMenuItemClickListener. So you can click on the
                 options */
                 popup.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
@@ -249,7 +249,7 @@ public class MainActivity extends AppCompatActivity {
                             return true;
                         } else {
                              /* Date: 19/04/2017
-                             Incoming #3010
+                             Incoming: #3010
                              Wanda: Add the feed to the db. */
                             DBHelper mDbHelper = new DBHelper(getApplicationContext());
                             SQLiteDatabase db = mDbHelper.getWritableDatabase();
@@ -271,7 +271,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     /* Date: 05/04/2017
-    Incoming #3052
+    Incoming: #3052
     Francis: The refreshFolders function only deals with the AndroidTreeView in the sidebar.
     It refreshes the sidebar folders to accommodate for any changes in the sql database. Call it
     whenever a change is performed on the sql database. */
@@ -314,7 +314,7 @@ public class MainActivity extends AppCompatActivity {
         Cursor cursor = db.rawQuery(query, new String[]{});
 
         /* Date: 19/04/2017
-        Incoming #3010
+        Incoming: #3010
         Wanda: Push folders onto the tree. */
         int prevFolderId = -1;
         TreeNode root = TreeNode.root();
@@ -327,7 +327,7 @@ public class MainActivity extends AppCompatActivity {
             final int folderID = cursor.getInt(4);
 
             /* Date: 22/03/2017
-            Incoming #3012
+            Incoming: #3012
             Kendra: Check if folder name is empty, if so do not display folder, statement added
             to help with deleting folders*/
             if (folderName != null && !folderName.isEmpty()) {
@@ -352,7 +352,7 @@ public class MainActivity extends AppCompatActivity {
                 }
 
                 /* Date: 19/04/2017
-                Incoming #3023
+                Incoming: #3023
                 Wanda: Push the feed onto the folder. */
                 if (feedUrl != null) {
                     final FeedTreeItemHolder.FeedTreeItem iconTreeItem = new FeedTreeItemHolder.FeedTreeItem(feedTitle, feedUrl);
@@ -360,14 +360,14 @@ public class MainActivity extends AppCompatActivity {
                     final TreeNode feedNode = new TreeNode(iconTreeItem)
                             .setViewHolder(feedTreeItemHolder);
                     /* Date 04/02/2017
-                    Incoming #3017
+                    Incoming: #3017
                     Kendra: On a long click, user can delete a feed from under a folder */
                     feedNode.setLongClickListener(new TreeNode.TreeNodeLongClickListener() {
                         @Override
                         public boolean onLongClick(TreeNode feedNode, Object object) {
                             Toast.makeText(MainActivity.this, feedUrl, Toast.LENGTH_LONG).show();
                             /* Date 04/02/2017
-                            Incoming #3017
+                            Incoming: #3017
                             Kendra: Send selected folder and feedURL information to method for deletion of feed. */
                             openDeleteFeedDialog(folderID, feedUrl, feedTreeItemHolder, feedNode);
                             return true;
@@ -425,7 +425,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     /* Date: 05/04/2017
-    Incoming #3052
+    Incoming: #3052
     Francis: Function references the history of searched feeds to recognize a feed that the user
     may wish to revisit. */
     private void setupAutocomplete() {
@@ -594,7 +594,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     /* Date: 05/04/2017
-    Incoming #3052
+    Incoming: #3052
     Francis: This is a dialog that is referenced by the subscribe menu (Create Folder). Any
     function that creates a new folder should reference this dialog to do so. */
     private void openCreateFolderDialog() {
@@ -623,7 +623,7 @@ public class MainActivity extends AppCompatActivity {
             public void onClick(View v) {
 
                 /* Date: 10/03/2017
-                Incoming #3050
+                Incoming: #3050
                 Francis: Adds the user input to the list of folders. To be established
                 later. */
                 String folderName = input.getText().toString().trim();
@@ -635,13 +635,13 @@ public class MainActivity extends AppCompatActivity {
                 }
 
                 /* Date: 19/04/2017
-                Incoming #3010
+                Incoming: #3010
                 Wanda: Get a writeable database. */
                 DBHelper mDbHelper = new DBHelper(getApplicationContext());
                 SQLiteDatabase db = mDbHelper.getWritableDatabase();
 
                 /* Date: 19/04/2017
-                Incoming #3010
+                Incoming: #3010
                 Wanda: Add folder to the db. */
                 ContentValues folderValues = new ContentValues();
                 folderValues.put(FolderEntry.TITLE, folderName);
@@ -659,7 +659,7 @@ public class MainActivity extends AppCompatActivity {
                 long folderID = db.insert(FolderEntry.TABLE_NAME, null, folderValues);
 
                 /* Date: 19/03/2017
-                Incoming #3023
+                Incoming: #3023
                 Wanda: Add feed to the db. */
                 ContentValues feedValues = new ContentValues();
                 feedValues.put(FeedEntry.URL, mFeedUrl);
@@ -668,7 +668,7 @@ public class MainActivity extends AppCompatActivity {
                 db.insert(FeedEntry.TABLE_NAME, null, feedValues);
 
                 /* Date: 19/03/2017
-                Incoming #3023
+                Incoming: #3023
                 Wanda: Refresh UI. */
                 self.refreshFolders();
                 dialog.dismiss();
@@ -715,7 +715,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     /* Date: 05/04/2017
-    Incoming #3052
+    Incoming: #3052
     Francis: The listener for the sort menu. */
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
@@ -728,7 +728,7 @@ public class MainActivity extends AppCompatActivity {
         }
 
         /* Date: 16/02/2017
-        Incoming #3050
+        Incoming: #3050
         Francis: A row of if statements to give each button their own functionality later. */
         if (id == R.id.dateOldest) {
             if (mFeedModelList != null) {
@@ -771,7 +771,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     /* Date: 05/04/2017
-    Incoming #3052
+    Incoming: #3052
     Francis: A check to determine whether an element has text. Returns the text or null. */
     public String innerElementTextOrNull(Element element, String elementName) {
         try {
@@ -782,7 +782,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     /* Date: 03/22/2017
-    Incoming #3026
+    Incoming: #3026
     Joline: Uses shared preferences to get the saved history from another instance of the app */
     private void getHistory() {
         sharedPref = getSharedPreferences(historyFile, 0);
@@ -792,7 +792,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     /* Date: 03/22/2017
-    Incoming #3026
+    Incoming: #3026
     Joline: saves the users url list via shared preferences */
     private void setHistory() {
         sharedPref = getSharedPreferences(historyFile, 0);
@@ -816,7 +816,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     /* Date: 05/04/2017
-    Incoming #3026
+    Incoming: #3026
     Francis: onStop function modified to save history instead of simple closing. */
     @Override
     public void onStop() {
@@ -825,7 +825,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     /* Date: 16/03/2017
-    Incoming #3026
+    Incoming: #3026
     Joline: This function updates the adapter and history list by adding the
     most recent accepted url submitted by the user. Shows the most recent url first. */
     private void addFeedToHistory(String feedURL) {
@@ -841,7 +841,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     /* Date: 05/04/2017
-    Incoming #3052
+    Incoming: #3052
     Francis: This part onward is the original code. Any additions will have their own comments
     within the function. */
     private class FetchFeedTask extends AsyncTask<Void, Void, Boolean> {
@@ -853,17 +853,17 @@ public class MainActivity extends AppCompatActivity {
         @Override
         protected void onPreExecute() {
             /* Date: 03/26/2017
-            Incoming #3054
+            Incoming: #3054
             Wanda: Set the layout state to refreshing. */
             mSwipeLayout.setRefreshing(true);
 
             /* Date: 03/26/2017
-            Incoming #3049
+            Incoming: #3049
             Wanda: Reset UI. */
             clearFeedDetails();
 
             /* Date: 03/26/2017
-            Incoming #3337
+            Incoming: #3337
             Wanda: Get the feed url from the text input. */
             feedURL = mFeedUrl;
         }
@@ -938,7 +938,7 @@ public class MainActivity extends AppCompatActivity {
             if (TextUtils.isEmpty(feedURL)) return false;
 
             /* Date: 16/02/2017
-            Incoming #3337
+            Incoming: #3337
             Wanda: If the URL entered does not have an http or https and/or www. associated with it,
             it will load the proper one for the website so the articles can be pulled and it does
             not get displayed as invalid RSS feed url */
@@ -959,7 +959,7 @@ public class MainActivity extends AppCompatActivity {
                             connection.setConnectTimeout(500);
                             stream = connection.getInputStream();
                             /* Date: 19/02/2017
-                            Incoming #3337
+                            Incoming: #3337
                             Wanda: If there's no exception thrown we use the stream */
                             mFeedModelList = parseFeed(stream);
                             succeeded = true;
@@ -990,7 +990,7 @@ public class MainActivity extends AppCompatActivity {
         @Override
         protected void onPostExecute(Boolean success) {
             /* Date: 26/03/2017
-            Incoming #3054
+            Incoming: #3054
             Wanda: Done refreshing. */
             mSwipeLayout.setRefreshing(false);
 

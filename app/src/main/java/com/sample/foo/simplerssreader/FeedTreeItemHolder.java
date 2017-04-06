@@ -13,7 +13,7 @@ import com.unnamed.b.atv.model.TreeNode;
 import com.unnamed.b.atv.model.TreeNode.BaseNodeViewHolder;
 
 /* Date: 05/04/2017
-Incoming #3052
+Incoming: #3052
 Francis: This class is a tree, it is used each time the folders are refreshed to store the
 sql table and enable AndroidTreeView to function in the main code. This tree holds each
 individual feed. */
@@ -29,7 +29,7 @@ class FeedTreeItemHolder extends BaseNodeViewHolder<FeedTreeItemHolder.FeedTreeI
         @SuppressLint("InflateParams") final View view = inflater.inflate(R.layout.layout_feed_node, null, false);
 
         /* Date: 03/04/2017
-        Incoming #3766
+        Incoming: #3766
         Wanda: Strip the url to the topPrivateDomain. */
         String strippedUrl = value.url
                 .replaceFirst("^(http://www\\.|http://|www\\.|https://www\\.|https://)", "");
@@ -38,7 +38,7 @@ class FeedTreeItemHolder extends BaseNodeViewHolder<FeedTreeItemHolder.FeedTreeI
                 InternetDomainName.from(strippedUrl).topPrivateDomain().toString();
 
         /* Date: 03/04/2017
-        Incoming #3766
+        Incoming: #3766
         Wanda: Set favicon. */
         ImageView imageView = (ImageView) view.findViewById(R.id.favicon);
         Glide
@@ -48,7 +48,7 @@ class FeedTreeItemHolder extends BaseNodeViewHolder<FeedTreeItemHolder.FeedTreeI
                 .into(imageView);
 
         /* Date: 19/03/2017
-        Incoming #3023
+        Incoming: #3023
         Wanda: Set text. */
         TextView textView = (TextView) view.findViewById(R.id.textView);
         textView.setText(value.text);
