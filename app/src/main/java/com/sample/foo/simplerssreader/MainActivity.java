@@ -166,7 +166,7 @@ public class MainActivity extends AppCompatActivity {
         mFetchFeedButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Log.v(TAG, "Clicked Fetch.");
+                Log.v(TAG, "Clicked fetch.");
                 mFeedUrl = mEditText.getText().toString().toLowerCase();
                 new FetchFeedTask().execute();
             }
@@ -195,7 +195,7 @@ public class MainActivity extends AppCompatActivity {
             not working on adding new items to the drop down menu. */
             @Override
             public void onClick(View view) {
-                Log.v(TAG, "Clicked Subscribe.");
+                Log.v(TAG, "Clicked subscribe.");
 
                 PopupMenu popup = new PopupMenu(MainActivity.this, mSubscribeButton);
                 /* Date: 16/02/2017
@@ -364,9 +364,9 @@ public class MainActivity extends AppCompatActivity {
                             return true;
                         }
                     });
-                    /*Date: 04/04/17
-                    *Issue 3011
-                    * Joline: listener for the subscribed feeds*/
+                    /* Date: 04/04/17
+                    Incoming: #3011
+                    Joline: listener for the subscribed feeds */
                     feedNode.setClickListener(new TreeNode.TreeNodeClickListener() {
                         @Override
                         public void onClick(TreeNode treeNode, Object object) {
@@ -389,17 +389,27 @@ public class MainActivity extends AppCompatActivity {
         foldersContainer.addView(treeNodeView);
     }
 
-    /*Date: 04/04/17
-    *Issue 3011
-    * Joline: Starting the activity for viewing a subscribed feed*/
+    /* Date: 04/04/17
+    Incoming: #3011
+    Joline: Starting the activity for viewing a subscribed feed */
     private void navigateToFeed(String feedTitle, String feedURL) {
-        // We have to save history before hiding the autocomplete field.
+
+        /* Date: 05/04/2017
+        Incoming: #3011
+        Wanda: save history before hiding the autocomplete field.*/
         setHistory();
-        // Hide info.
+
+        /* Date: 05/04/2017
+        Incoming: #3011
+        Wanda: Hide info. */
         mInfoView.setVisibility(View.GONE);
-        // Close the side menu.
+        /* Date: 05/04/2017
+        Incoming: #3011
+        Wanda: Close the side menu. */
         mDrawerLayout.closeDrawer(Gravity.START);
-        // Set the ActionBar title to the feed title.
+        /* Date: 05/04/2017
+        Incoming: #3011
+        Wanda: Set the ActionBar title to the feed title. */
         setTitle(feedTitle);
         mFeedUrl = feedURL;
         new FetchFeedTask().execute();
@@ -429,7 +439,9 @@ public class MainActivity extends AppCompatActivity {
         mInfoView.setVisibility(View.VISIBLE);
         mDrawerLayout.closeDrawer(Gravity.START);
         setTitle("Feedora");
-        // Not sure why we have to redo this after showing it again for results to show up.
+        /* Date: 05/04/2017
+        Incoming: #3011
+        Wanda: Redo this after showing it again for results to show up. */
         setupAutocomplete();
     }
 
@@ -615,8 +627,9 @@ public class MainActivity extends AppCompatActivity {
                 ContentValues folderValues = new ContentValues();
                 folderValues.put(FolderEntry.TITLE, folderName);
 
-                /*Issue 3043
-                * Joline: error handling for duplicate folder. Doesn't allow dup to be saved*/
+                /* 04/04/2017
+                Incoming: #3043
+                Joline: error handling for duplicate folder. Doesn't allow dup to be saved */
                 boolean folderExists = folderExistsInDatabase(db, folderName);
                 if (folderExists) {
                     Toast.makeText(MainActivity.this,
@@ -626,7 +639,7 @@ public class MainActivity extends AppCompatActivity {
                 }
                 long folderID = db.insert(FolderEntry.TABLE_NAME, null, folderValues);
 
-                /* Date: 19/04/2017
+                /* Date: 19/03/2017
                 Incoming #3023
                 Wanda: Add feed to the db. */
                 ContentValues feedValues = new ContentValues();
@@ -635,7 +648,8 @@ public class MainActivity extends AppCompatActivity {
                 feedValues.put(FeedEntry.FOLDER_ID, folderID);
                 db.insert(FeedEntry.TABLE_NAME, null, feedValues);
 
-                /* Date: 19/04/2017
+                /* Date: 19/03/2017
+                Incoming #3023
                 Wanda: Refresh UI. */
                 self.refreshFolders();
                 dialog.dismiss();
@@ -652,10 +666,10 @@ public class MainActivity extends AppCompatActivity {
         dialog.show();
     }
 
-    /*Date: 04/04/17
-    * Issue 3043
-    * Joline: using this function to check the SQLite database to see if the folder the user entered
-    * in create folder already exists*/
+    /* Date: 04/04/17
+    Incoming: #3043
+    Joline: using this function to check the SQLite database to see if the folder the user entered
+    in create folder already exists */
     private boolean folderExistsInDatabase(SQLiteDatabase db, String folderName) {
         Cursor cursor;
         String checkDB = "SELECT TITLE FROM " + FolderEntry.TABLE_NAME + " WHERE TITLE=?";
@@ -747,7 +761,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     /* Date: 03/22/2017
-    * Joline: Uses shared preferences to get the saved history from another instance of the app*/
+    Joline: Uses shared preferences to get the saved history from another instance of the app */
     private void getHistory() {
         sharedPref = getSharedPreferences(historyFile, 0);
         int size = sharedPref.getInt("list_size", 0);
@@ -755,8 +769,8 @@ public class MainActivity extends AppCompatActivity {
             mHistoryList.add(sharedPref.getString("url_" + i, null));
     }
 
-    /*Date: 03/22/2017
-    * Joline: saves the users url list via shared preferences*/
+    /* Date: 03/22/2017
+    Joline: saves the users url list via shared preferences */
     private void setHistory() {
         sharedPref = getSharedPreferences(historyFile, 0);
         SharedPreferences.Editor editor = sharedPref.edit();
@@ -846,7 +860,7 @@ public class MainActivity extends AppCompatActivity {
 
                 String author;
                 author = innerElementTextOrNull(article, "dc|creator");
-                /* Date: 03/25/2017
+                /* Date: 25/03/2017
                 Incoming: #3334
                 Wanda: If we didn't get an author from dc:creator try the author element. */
                 if (author == null) author = innerElementTextOrNull(article, "author");
@@ -857,7 +871,7 @@ public class MainActivity extends AppCompatActivity {
                 } catch (Exception e) {
                     thumbUrl = null;
                 }
-                /* Date: 03/25/2017
+                /* Date: 25/03/2017
                 Incoming: #3765
                 Wanda: If we don't have an image try to pull one from the description html. */
                 if (thumbUrl == null) {
@@ -939,11 +953,12 @@ public class MainActivity extends AppCompatActivity {
 
         @Override
         protected void onPostExecute(Boolean success) {
-            /* Date: 03/26/2017
+            /* Date: 26/03/2017
             Wanda: Done refreshing. */
             mSwipeLayout.setRefreshing(false);
 
-            /* Date: 03/26/2017
+            /* Date: 26/03/2017
+            Incoming: #3020
             Wanda: Hide keyboard. */
             InputMethodManager inputMethodManager = (InputMethodManager) getSystemService(INPUT_METHOD_SERVICE);
             View focusedView = getCurrentFocus();
@@ -953,7 +968,8 @@ public class MainActivity extends AppCompatActivity {
             }
 
             if (success) {
-                /* Date: 03/26/2017
+                /* Date: 26/03/2017
+                Incoming: #3020
                 Wanda: Commit changes to the UI. */
                 mFeedTitle = feedTitle;
                 mFeedUrl = feedURL;
